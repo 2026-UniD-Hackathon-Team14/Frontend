@@ -40,20 +40,7 @@ else {
   (async () => {
     try {
       Object.assign(currentUser, await UserAPI.loadUser(currentUser.id));
-      const ownedIds = new Set(appState.roomIds.map(String));
-      const candidates = knownRoomIds();
-      const rooms = await Promise.allSettled(
-        candidates.map((id) => API.request("/rooms/" + API.id(id))),
-      );
-      rooms.forEach((result) => {
-        if (
-          result.status === "fulfilled" &&
-          result.value.members?.some((m) => String(m.id) === currentUser.id)
-        ) {
-          appState.workspaces.push(serverRoom(result.value));
-          rememberRoom(result.value.id);
-        }
-      });
+      await loadJoinedRooms();
       ready = true;
       const selected =
         appState.workspaces.find((w) => w.id === appState.activeId) || appState.workspaces[0];
@@ -63,8 +50,6 @@ else {
         renderApp();
         setConnection("api.connected");
       }
-      if (rooms.some((r, index) => r.status === "rejected" && ownedIds.has(candidates[index])))
-        showError(new Error("api.roomsIncomplete"));
     } catch (error) {
       showError(error);
       if (error.status === 404 || error.status === 401) UserAPI.logout();

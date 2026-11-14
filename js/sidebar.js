@@ -13,9 +13,9 @@ function renderWorkspaces() {
   const hasWorkspace = Boolean(workspace) && ready;
 
   $("#invite-friends").disabled = !hasWorkspace;
-  $("#leave-room").disabled = !hasWorkspace;
-  $("#message-input").disabled = !hasWorkspace;
-  $("#send").disabled = !hasWorkspace || busy || Boolean(pending);
+  $("#leave-room").disabled = !hasWorkspace || roomLeaveInFlight;
+  $("#message-input").disabled = !hasWorkspace || roomLeaveInFlight;
+  $("#send").disabled = !hasWorkspace || busy || Boolean(pending) || roomLeaveInFlight;
   $("#message-input").placeholder = hasWorkspace ? t("messagePlaceholder") : t("createFirst");
   $("#room-title").textContent = hasWorkspace ? "# " + workspace.name : t("noWorkspace");
   $("#breadcrumb").textContent = workspace
@@ -65,7 +65,7 @@ async function openRoom(id, { join = false } = {}) {
   await selectWorkspace(id);
 }
 async function selectWorkspace(id) {
-  if (busy || pending) {
+  if (busy || pending || roomLeaveInFlight) {
     toast("busyMove");
     return;
   }

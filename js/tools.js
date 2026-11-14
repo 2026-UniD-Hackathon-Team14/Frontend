@@ -3,7 +3,7 @@ let workspaceTool = "chat";
 let calendarMonth = new Date().toISOString().slice(0, 7);
 let toolVersion = 0;
 const toolReads = new Set();
-const serverTools = { events: [], todos: [], receipt: null, receiptId: null, loading: false };
+const serverTools = { events: [], todos: [], receipts: [], receipt: null, receiptId: null, receiptRoomId: null, loading: false };
 function toolDate(value) {
   return value ? I18n.formatDate(value) : t("noDueDate");
 }
@@ -30,12 +30,13 @@ function restoreToolDrafts(drafts) {
 }
 function refreshWorkspaceTools() {
   const button = $("#settle-agreements");
-  button.disabled = !ready || !activeWorkspace() || button.dataset.pending === "true";
+  button.disabled = !ready || !activeWorkspace() || roomLeaveInFlight || button.dataset.pending === "true";
   button.textContent = t("tools.settle");
 }
-async function showWorkspaceTool(view) {
+async function showWorkspaceTool(view, { receiptId = null } = {}) {
   if (!["chat", "receipt", "calendar", "todo"].includes(view)) return;
   workspaceTool = view;
+  serverTools.requestedReceiptId = view === "receipt" && receiptId != null ? String(receiptId) : null;
   toolVersion++;
   $("#chat-view").hidden = view !== "chat";
   $("#tool-view").hidden = view === "chat";
@@ -49,6 +50,7 @@ async function showWorkspaceTool(view) {
   serverTools.events = [];
   serverTools.todos = [];
   serverTools.receipt = null;
+  serverTools.receipts = [];
   serverTools.loading = true;
   renderWorkspaceTool();
   await loadWorkspaceTool();
@@ -63,7 +65,7 @@ async function loadWorkspaceTool({ quiet = false } = {}) {
   if (view === "chat") return;
   toolReads.add(readKey);
   try {
-    let data;
+    let data, receipts, selectedReceiptId;
     if (view === "todo") data = await API.request("/todos");
     else if (!roomId) {
       serverTools.loading = false;
@@ -72,11 +74,16 @@ async function loadWorkspaceTool({ quiet = false } = {}) {
     } else if (view === "calendar")
       data = await API.request("/rooms/" + roomId + "/calendar-events?lang=" + lang);
     else {
-      const ids = appState.receiptIds[roomId] || [];
-      if (!ids.includes(String(serverTools.receiptId))) serverTools.receiptId = ids.at(-1) || null;
-      data = serverTools.receiptId
-        ? await API.request("/receipts/" + API.id(serverTools.receiptId) + "?lang=" + lang)
+      receipts = await API.request("/rooms/" + API.id(roomId) + "/receipts");
+      if (!Array.isArray(receipts)) throw new Error("api.invalidResponse");
+      const preferredId = serverTools.requestedReceiptId || (serverTools.receiptRoomId === roomId ? String(serverTools.receiptId) : null);
+      if (serverTools.requestedReceiptId && !receipts.some(receipt => String(receipt.id) === preferredId))
+        throw new Error("api.receiptUnavailable");
+      selectedReceiptId = receipts.find(receipt => String(receipt.id) === preferredId)?.id ?? receipts[0]?.id ?? null;
+      data = selectedReceiptId
+        ? await API.request("/receipts/" + API.id(selectedReceiptId) + "?lang=" + lang)
         : null;
+      if (data?.roomId != null && String(data.roomId) !== roomId) throw new Error("api.receiptRoomMismatch");
     }
     if (
       version !== toolVersion ||
@@ -87,7 +94,14 @@ async function loadWorkspaceTool({ quiet = false } = {}) {
       return;
     if (view === "todo") serverTools.todos = data;
     if (view === "calendar") serverTools.events = data;
-    if (view === "receipt") serverTools.receipt = data;
+    if (view === "receipt") {
+      serverTools.receipt = data;
+      serverTools.receipts = receipts;
+      serverTools.receiptId = selectedReceiptId == null ? null : String(selectedReceiptId);
+      serverTools.receiptRoomId = roomId;
+      appState.receiptIds[roomId] = receipts.map(receipt => String(receipt.id));
+      saveState();
+    }
     const drafts = toolFormDrafts();
     serverTools.loading = false;
     renderWorkspaceTool();
@@ -131,20 +145,21 @@ function renderWorkspaceTool() {
 }
 function renderReceiptTool() {
   const receipt = serverTools.receipt,
-    ids = appState.receiptIds[channel] || [];
+    summaries = serverTools.receipts;
   const controls =
     '<div class="tools-toolbar"><label>' +
     esc(t("tools.history")) +
     '<select id="receipt-choice"><option value="">—</option>' +
-    ids
+    summaries
       .map(
-        (id) =>
+        (summary) =>
           '<option value="' +
-          esc(id) +
+          esc(summary.id) +
           '" ' +
-          (String(receipt?.id) === id ? "selected" : "") +
+          (String(receipt?.id) === String(summary.id) ? "selected" : "") +
           ">#" +
-          esc(id) +
+          esc(summary.id) + " · " + esc(t("api.status." + summary.status)) +
+          " · " + esc(t("api.receiptProgress", { confirmed: summary.confirmedItemCount, total: summary.itemCount })) +
           "</option>",
       )
       .join("") +
@@ -167,10 +182,12 @@ function renderReceiptTool() {
       .map((item) => {
         const responses = item.responses || [],
           mine = responses.find((x) => String(x.userId) === currentUser.id);
+        const disputed = item.status === "OBJECTED" || responses.some(response => response.type === "OBJECT");
         return (
-          '<section class="receipt-item"><h4>' +
-          esc(item.what) +
-          "</h4><p>" +
+          '<section class="receipt-item' + (disputed ? ' has-dispute' : '') + '" data-receipt-item="' + esc(item.id) + '"><h4>' +
+          esc(item.title || item.what) +
+          "</h4>" + (item.title ? '<p class="receipt-item-content">' + esc(item.what || "") + '</p>' : "") +
+          (item.sourceCardId != null ? '<p class="tool-muted">' + esc(t("api.sourceCard", { id: item.sourceCardId })) + '</p>' : "") + "<p>" +
           esc(item.assignee?.name || t("unassigned")) +
           " · " +
           esc(item.displayDate || toolDate(item.dueDate)) +
@@ -319,15 +336,54 @@ function rememberReceipt(roomId, id) {
   if (!ids.includes(String(id))) ids.push(String(id));
   saveState();
 }
+async function settleAgreements(button) {
+  if (!ready || !activeWorkspace() || busy || pending) return;
+  const roomId = channel;
+  await runAction(button, async () => {
+    // 현재 API는 제외 목록을 받지 않으므로 이의 카드를 재등록하는 요청을 막습니다.
+    const cards = await API.request("/rooms/" + API.id(roomId) + "/cards" + API.query());
+    const receipts = await loadBoardReceipts(roomId, cards, I18n.language);
+    if (cards.some(card => card.status === "CONFIRMED" && card.receiptStatus === "OBJECTED") || receipts.some(receipt => receipt.disputed))
+      throw new Error("api.settlementBlockedByObjection");
+    if (channel !== roomId || roomLeaveInFlight) return;
+    let result;
+    try {
+      // 대상 선정·중복 방지·이미 승인된 항목 제외는 서버가 최종 판단합니다.
+      result = await API.request("/rooms/" + API.id(roomId) + "/receipts", { method: "POST" });
+    } catch (error) {
+      if (error.code === "NO_ELIGIBLE_CARDS") {
+        toast("api.noEligibleCards");
+        if (channel === roomId) await refreshRoom();
+        return;
+      }
+      throw error;
+    }
+    const id = String(API.id(result?.receiptId));
+    if (String(result.roomId) !== roomId) throw new Error("api.receiptRoomMismatch");
+    rememberReceipt(roomId, id);
+    if (channel !== roomId) return;
+    serverTools.receiptId = id;
+    serverTools.receiptRoomId = roomId;
+    await showWorkspaceTool("receipt");
+    if (channel === roomId) toast(result.created ? "api.settlementCreated" : "api.settlementReused");
+  });
+}
 function initWorkspaceTools() {
-  $("#settle-agreements").onclick = () => {
-    // The deployed API can only extract receipts from meeting messages. Never call it
-    // for card settlement: it cannot exclude already-approved cards or retain source IDs.
-    showError(new Error("api.settlementUnavailable"));
-  };
+  $("#settle-agreements").onclick = event => settleAgreements(event.currentTarget);
   document.addEventListener("click", (event) => {
     const b = event.target.closest("button");
     if (!b) return;
+    if (b.dataset.openBoardReceipt) {
+      const roomId = channel;
+      runAction(b, async () => {
+        const receipt = activeWorkspace()?.boardReceipts?.find(receipt => receipt.id === b.dataset.openBoardReceipt);
+        if (!receipt || !roomId) return;
+        serverTools.receiptId = String(API.id(b.dataset.openBoardReceipt));
+        serverTools.receiptRoomId = roomId;
+        await showWorkspaceTool("receipt", { receiptId: b.dataset.openBoardReceipt });
+      });
+      return;
+    }
     if (b.dataset.toolView) {
       showWorkspaceTool(b.dataset.toolView);
       return;
@@ -343,6 +399,7 @@ function initWorkspaceTools() {
           body: { type: "CONFIRM", comment: null },
         });
         await loadWorkspaceTool();
+        await refreshRoom();
       });
     if (b.dataset.exportItem || b.dataset.exportCard)
       runAction(b, async () => {
@@ -391,6 +448,7 @@ function initWorkspaceTools() {
       });
     }
     if (input.id === "receipt-choice") {
+      serverTools.requestedReceiptId = null;
       serverTools.receiptId = input.value;
       loadWorkspaceTool();
     }
@@ -404,15 +462,19 @@ function initWorkspaceTools() {
     runAction(form.querySelector("[type=submit]"), async () => {
       if (form.id === "receipt-open-form") {
         const id = API.id(values.get("receiptId"));
-        await API.request("/receipts/" + id + API.query());
+        const receipt = await API.request("/receipts/" + id + API.query());
+        if (receipt?.roomId != null && String(receipt.roomId) !== channel) throw new Error("api.receiptRoomMismatch");
         rememberReceipt(channel, id);
         serverTools.receiptId = String(id);
+        serverTools.receiptRoomId = channel;
       }
-      if (form.dataset.disputeItem)
+      if (form.dataset.disputeItem) {
         await API.request("/receipt-items/" + API.id(form.dataset.disputeItem) + "/responses", {
           method: "POST",
           body: { type: "OBJECT", comment: String(values.get("reason")).trim() },
         });
+        await refreshRoom();
+      }
       if (form.id === "tool-todo-form" || form.dataset.editTodo) {
         const title = String(values.get("title") || "").trim();
         if (!title) return;

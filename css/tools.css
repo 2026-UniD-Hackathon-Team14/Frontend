@@ -1,4 +1,25 @@
 /* 메인 화면의 기존 선택자를 덮어쓰지 않는 ZIP 확장 화면 */
+.board .board-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+  width: 100%;
+  padding: 12px 13px;
+  margin-bottom: 9px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--color-primary);
+  text-align: left;
+  font-size: 12px;
+}
+.board .board-receipt:hover { border-color: var(--color-primary); background: var(--color-bg-surface); filter: none; }
+.board .board-receipt.has-dispute { border-color: var(--color-danger); box-shadow: 0 0 0 1px rgb(217 105 95 / 12%); }
+.board-unsettled-card { display: grid; gap: 5px; padding: 12px 13px; margin-bottom: 9px; border: 1px solid var(--color-border-strong); border-radius: 9px; background: #fff; }
+.board-unsettled-card strong { font-size: 13px; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+.board-unsettled-card > span { font-size: 11px; color: var(--color-text-subtle); }
 #chat-view[hidden], #tool-view[hidden] { display: none !important; }
 .tool-nav { margin-top: 14px; }
 .tool-nav .nav-label {
@@ -39,6 +60,22 @@
 .meeting-receipt > .receipt-facts { border-top: 1px dashed var(--sand-600); border-bottom: 1px dashed var(--sand-600); padding: 18px 0; }
 .receipt-item { margin: 14px 0; padding: 16px; border: 1px solid var(--color-border); border-radius: 10px; }
 .receipt-item.has-dispute { background: var(--coral-50); border-color: var(--color-danger); }
+.board .pinned-agreement.has-dispute,
+.chat-agreement.has-dispute {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 1px rgb(217 105 95 / 12%);
+}
+.agreement-dispute-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--color-danger);
+  border-radius: 999px;
+  background: var(--coral-50);
+  color: var(--coral-800);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.6;
+}
 .receipt-item-title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .receipt-item-title h4 { margin: 0; flex: 1; overflow-wrap: anywhere; }
 .receipt-number { color: var(--color-text-subtle); font: 12px ui-monospace, monospace; }
