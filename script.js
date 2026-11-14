@@ -9,6 +9,25 @@ else {
   initInvitations();
   initWorkspaceTools();
   initRoomLeave();
+  const profileToggle = $("#profile-toggle");
+  const profileMenu = $("#profile-menu");
+  function closeProfileMenu() {
+    profileMenu.hidden = true;
+    profileToggle.setAttribute("aria-expanded", "false");
+  }
+  profileToggle.onclick = () => {
+    profileMenu.hidden = !profileMenu.hidden;
+    profileToggle.setAttribute("aria-expanded", String(!profileMenu.hidden));
+  };
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".side-bottom")) closeProfileMenu();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !profileMenu.hidden) {
+      closeProfileMenu();
+      profileToggle.focus();
+    }
+  });
   $("#logout").onclick = () => {
     RoomSync.stop();
     UserAPI.logout();
@@ -43,7 +62,8 @@ else {
       await loadJoinedRooms();
       ready = true;
       const selected =
-        appState.workspaces.find((w) => w.id === appState.activeId) || appState.workspaces[0];
+        appState.workspaces.find((w) => w.id === appState.activeId) ||
+        appState.workspaces[0];
       if (selected) await selectWorkspace(selected.id);
       else {
         appState.activeId = channel = null;

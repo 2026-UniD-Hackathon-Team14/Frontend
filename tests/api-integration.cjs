@@ -11,6 +11,8 @@ for (const bin of process.env.PATH.split(path.delimiter)) {
   }
 }
 const root = path.resolve(__dirname, "..");
+const analyses = new Map();
+const delivered = new Map();
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, "openapi.json"), "utf8"));
 const vm = require("vm"),
   locales = { window: {} };
@@ -83,7 +85,7 @@ async function routeAPI(route) {
     );
   })?.[1][method.toLowerCase()];
   assert(operation, "Endpoint must exist in Swagger: " + method + " " + url.pathname);
-  const ref = operation.requestBody?.content?.["application/json"]?.schema?.$ref;
+  const ref = operation?.requestBody?.content?.["application/json"]?.schema?.$ref;
   if (ref) {
     const schema = spec.components.schemas[ref.split("/").at(-1)];
     for (const key of schema.required || []) assert(body[key] !== undefined, key + " is required");
@@ -104,6 +106,16 @@ async function routeAPI(route) {
       }),
     });
   let match;
+  // Deployed card objection contract.
+  if ((match = p.match(/^\/cards\/(\d+)\/objections$/))) {
+    const card = cards.find(card => card.id === Number(match[1]));
+    assert.deepEqual(Object.keys(body), ["comment"]);
+    if (failCard) { failCard = false; return reply("Objection failed", 503); }
+    if (card.status !== "PENDING") return reply("Card closed", 409);
+    card.status = "REJECTED";
+    card.objection = { userId: uid, comment: body.comment, createdAt: new Date().toISOString() };
+    return reply(card);
+  }
   if (p === "/users" && method === "POST") {
     assert.deepEqual(Object.keys(body).sort(), ["language", "name"]);
     const u = { id: users.length + 1, ...body };
@@ -149,7 +161,20 @@ async function routeAPI(route) {
     if (!suffix) return reply(room);
     if (!room.members.some((m) => m.id === uid)) return reply("Not a member", 403);
     if (suffix === "/messages/analyze") {
-      return reply({
+      const analyzed = result => {
+        result.analysisId = "analysis-" + (analyses.size + 1);
+        result.expressions.forEach((expression,index) => {
+          expression.expressionId = "expr-" + index;
+          expression.candidates.forEach((candidate,ci) => candidate.candidateId = "candidate-" + index + "-" + ci);
+        });
+        analyses.set(result.analysisId, { ...result, text: body.text, uid });
+        return reply(result);
+      };
+      if (body.text === "maybe Sunday, earlier if possible") return analyzed({ambiguous:true,expressions:[
+        {phrase:"maybe Sunday",start:0,end:12,candidates:[{intent:"ACCEPT",label:"I can deliver Sunday"},{intent:"OTHER",label:"Another meaning"}]},
+        {phrase:"if possible",start:22,end:33,candidates:[{intent:"UNDECIDED",label:"Not decided"},{intent:"OTHER",label:"Another meaning"}]}
+      ]});
+      return analyzed({
         ambiguous: body.text.includes("maybe"),
         expressions: body.text.includes("maybe")
           ? [
@@ -168,7 +193,25 @@ async function routeAPI(route) {
     }
     if (suffix === "/messages") {
       if (method === "POST") {
-        assert.deepEqual(Object.keys(body).sort(), ["selectedIntent", "sendOriginal", "text"]);
+        assert(body.clientMessageId);
+        assert.equal(body.selectedIntent, undefined);
+        let intentSelections = [];
+        if (body.analysisId) {
+          const analysis = analyses.get(body.analysisId);
+          assert.equal(analysis.text, body.text);
+          assert.equal(analysis.uid, uid);
+          assert.equal(body.intentSelections.length,analysis.expressions.length);
+          intentSelections = body.intentSelections.map(selection => {
+            const expression = analysis.expressions.find(expression => expression.expressionId === selection.expressionId);
+            const candidate = expression.candidates.find(candidate => candidate.candidateId === selection.candidateId);
+            assert(candidate);
+            if (candidate.intent === "OTHER") assert(selection.customText.trim());
+            else assert.equal(selection.customText,null);
+            return {...selection, phrase:expression.phrase, intent:candidate.intent, label:candidate.label,
+              displayMeaning:selection.customText || candidate.label};
+          });
+        }
+        if (delivered.has(body.clientMessageId)) return reply(delivered.get(body.clientMessageId));
         if (failSend) {
           failSend = false;
           return reply("Send failed", 503);
@@ -180,10 +223,13 @@ async function routeAPI(route) {
           senderName: users.find((u) => u.id === uid).name,
           originalText: body.text,
           originalLanguage: users.find((u) => u.id === uid).language,
-          selectedIntent: body.selectedIntent,
+          selectedIntent: null,
+          sendOriginal: body.sendOriginal,
+          intentSelections,
           createdAt: new Date().toISOString(),
         };
         messages.push(m);
+        delivered.set(body.clientMessageId,m);
         return reply(m, 201);
       }
       if (failGet) return reply("Read failed", 503);
@@ -241,10 +287,10 @@ async function routeAPI(route) {
       const existing = receipts.find(receipt => receipt.roomId === id && receipt.items.length === eligible.length &&
         eligible.every(card => receipt.items.some(item => item.sourceCardId === card.id)));
       if (existing) return reply({receiptId:existing.id,roomId:id,created:false,sourceCardIds:eligible.map(card => card.id),status:existing.status});
-      const receipt = {id:receipts.length+1,roomId:id,createdAt:new Date().toISOString(),status:"PENDING",participants:room.members,
+      const receipt = {id:receipts.length+1,roomId:id,createdAt:new Date().toISOString(),status:"CONFIRMED",participants:room.members,
         items:eligible.map(card => receipts.flatMap(receipt => receipt.items).find(item => item.sourceCardId === card.id && item.status !== "CONFIRMED") || {
           id:nextReceiptItemId++,sourceCardId:card.id,sourceCardVersion:1,title:card.title,what:card.content,
-          assignee:card.assignee,dueDate:card.dueDate,displayDate:card.displayDate,status:"PENDING",responses:[],
+          assignee:card.assignee,dueDate:card.dueDate,displayDate:card.displayDate,status:"CONFIRMED",responses:[],
         })};
       receipts.push(receipt);
       return reply({receiptId:receipt.id,roomId:id,created:true,sourceCardIds:eligible.map(card => card.id),status:receipt.status},201);
@@ -351,6 +397,7 @@ async function routeAPI(route) {
           baseUrl: "https://api.test/api",
           wsUrl: "wss://api.test/ws",
           pollInterval: 600000,
+          agreementReviewV2: true,
         };
         window.framesSent = [];
         window.WebSocket = class {
@@ -453,12 +500,16 @@ async function routeAPI(route) {
     await a.locator("#meaning-dialog[open]").waitFor();
     failSend = true;
     await a.click("[data-meaning=UNDECIDED]");
+    await a.click("#send-meanings");
     await a.locator("#meaning-error:not([hidden])").waitFor();
     await a.waitForFunction(() => !busy);
     assert.equal(messages.length, 0, "Failed intent submission must remain unsent");
     await a.click("[data-meaning=UNDECIDED]");
+    await a.click("#send-meanings");
     await a.waitForFunction(() => chats[channel].some((m) => m.originalText === "maybe tomorrow"));
-    assert.equal(messages[0].selectedIntent, "UNDECIDED");
+    assert.equal(messages[0].intentSelections[0].intent, "UNDECIDED");
+    const attempts = requests.filter(r=>r.method==="POST" && r.p.endsWith("/messages"));
+    assert.equal(attempts.at(-1).body.clientMessageId,attempts.at(-2).body.clientMessageId);
     assert.equal(messages[0].senderId, 1);
     await b.evaluate(() =>
       testSocket.onmessage({
@@ -534,129 +585,109 @@ async function routeAPI(route) {
       cards[0].confirmations.map((c) => c.userId),
       [1, 2],
     );
-    cards.push({ ...clone(cards[0]), id:2, title:'Unconfirmed card', status:'PENDING', confirmations:[] });
-    failSettlement = true;
-    await a.click("#settle-agreements");
-    await a.locator("#api-error:not([hidden])").waitFor();
-    assert.equal(receipts.length,0,'Failed settlement must not fabricate a receipt');
-    await a.click('#dismiss-error');
-    await a.evaluate(() => { document.querySelector('#settle-agreements').click(); document.querySelector('#settle-agreements').click(); });
-    await a.locator('.meeting-receipt').waitFor();
-    assert.equal(receipts.length,1,'Rapid duplicate click creates only one receipt');
-    assert.deepEqual(receipts[0].items.map(item=>item.sourceCardId),[1],'Only board-confirmed cards are settled');
-    assert.equal(await a.locator('.receipt-item h4').textContent(),'Actual card');
-    assert.equal(requests.filter(r=>r.method==='POST'&&r.p.includes('/meetings')).length,0);
-    assert.equal(await a.locator('#end-meeting').count(),0);
-    await a.click('[data-receipt-confirm]');
-    await a.waitForFunction(()=>serverTools.receipt?.items[0].responses.some(response=>String(response.userId)===currentUser.id));
-    await a.click('[data-tool-view=chat]');
-    assert.equal(await a.locator('.board-receipt').count(),1,'Pending receipt is already represented by one receipt cell');
-    assert.equal(await a.locator('.board-unsettled-card').count(),0,'Receipt grouping replaces its standalone card');
-    await a.click('#settle-agreements');
-    await a.locator('.meeting-receipt').waitFor();
-    assert.equal(receipts.length,1,'Repeated settlement reuses a pending receipt');
-    assert.equal(receipts[0].items[0].responses.length,1,'Reusing a receipt preserves confirmations');
-    await b.click('[data-tool-view=receipt]');
-    await b.locator('[data-receipt-confirm]').waitFor();
-    assert.equal(await b.locator('#receipt-choice').inputValue(),'1','Another account discovers the receipt without cached IDs');
-    await b.click('[data-receipt-confirm]');
-    await b.waitForFunction(()=>serverTools.receipt?.status==='CONFIRMED');
-    await a.evaluate(()=>loadWorkspaceTool());
-    assert.equal(receipts[0].status,'CONFIRMED');
-    await a.click('[data-export-item]');
-    await a.locator('.tools-calendar').waitFor();
-    assert.equal(events.length,1);
-    await a.evaluate(()=>refreshRoom());
-    await a.click('[data-tool-view=chat]');
-    await a.locator('.board-receipt').waitFor();
-    assert.equal(await a.locator('.board-receipt > span').count(),1,'Receipt-only cell has one label when not disputed');
-    assert.equal(await a.locator('.board-receipt').textContent(),await a.evaluate(()=>t('api.receiptNumber',{id:1})));
-    assert.equal(await a.locator('.board [data-export-card]').count(),0);
-    assert(!(await a.locator('#board-cards').textContent()).includes('Actual card'));
-    assert(!(await a.locator('#board-cards').textContent()).includes('Original details'));
-    await a.click('.board-receipt');
-    await a.waitForFunction(()=>workspaceTool==='receipt'&&serverTools.receipt?.id===1);
-    assert.equal(await a.locator('#receipt-choice').inputValue(),'1');
-    await a.reload();
-    await a.waitForFunction(()=>ready&&activeWorkspace()?.boardReceipts?.some(receipt=>receipt.id==='1'));
-    await a.locator('.board-receipt').waitFor();
-    await b.locator('[data-receipt-item="1"] details').evaluate(element=>{element.open=true;});
-    await b.fill('[data-dispute-item="1"] textarea','Please check the deadline');
-    await b.click('[data-dispute-item="1"] button');
-    await b.waitForFunction(()=>serverTools.receipt?.items[0]?.status==='OBJECTED');
-    assert.equal(await b.locator('[data-receipt-item="1"]').evaluate(element=>getComputedStyle(element).borderTopColor),'rgb(217, 105, 95)');
-    await a.evaluate(()=>testSocket.onmessage({data:'MESSAGE\ndestination:/topic/rooms/1\n\n'+JSON.stringify({type:'RECEIPT_UPDATED',data:{roomId:1,receiptId:1}})+'\0'}));
-    await a.locator('.board [data-open-board-receipt="1"].has-dispute').waitFor();
-    assert.equal(await a.locator('.board .has-dispute').count(),1);
-    assert.equal(await a.locator('.board .agreement-dispute-tag').textContent(),await a.evaluate(()=>t('api.boardDisputed')));
-    assert.equal(await a.locator('.board .has-dispute').evaluate(element=>getComputedStyle(element).borderTopColor),'rgb(217, 105, 95)');
-    assert.equal(await a.locator('.board .agreement-dispute-tag').evaluate(element=>getComputedStyle(element).borderTopColor),'rgb(217, 105, 95)');
-    assert.equal(await a.locator('.board-receipt').count(),1,'Dispute keeps the same receipt cell');
-    assert.equal(await a.locator('.board-receipt > span').count(),2,'Disputed cell contains only its ID and the dispute warning');
-    const settlementWritesBeforeObjection=requests.filter(request=>request.method==='POST'&&request.p.endsWith('/receipts')).length;
-    await a.click('#settle-agreements');
-    await a.waitForFunction(()=>!pendingActions.size);
-    assert.equal(requests.filter(request=>request.method==='POST'&&request.p.endsWith('/receipts')).length,settlementWritesBeforeObjection,'Known objected cards must not be resubmitted through the unsafe bodyless endpoint');
+    cards.push({ ...clone(cards[0]), id:2, title:'Rejected card', status:'PENDING', confirmations:[] });
+    await a.evaluate(() => refreshRoom());
+    await a.click('[data-object-agreement="2"]');
+    await a.fill('[data-card-objection="2"] textarea','I understood Friday, not Thursday. <script>bad()</script>');
+    await a.evaluate(() => refreshRoom({quiet:true}));
+    assert.match(await a.locator('[data-card-objection="2"] textarea').inputValue(), /Friday/);
+    await a.evaluate(() => window.NUNCHI_API_CONFIG.agreementReviewV2 = false);
+    await a.click('[data-card-objection="2"] [type=submit]');
     await a.locator('#api-error:not([hidden])').waitFor();
+    assert.equal(cards[1].status,'PENDING');
+    assert.equal(requests.filter(r=>r.p.endsWith('/objections')).length,0);
     await a.click('#dismiss-error');
-    await b.click('[data-receipt-confirm="1"]');
-    await b.waitForFunction(()=>serverTools.receipt?.items[0]?.status==='CONFIRMED');
-    assert.equal(await b.locator('[data-receipt-item="1"].has-dispute').count(),0);
-    await a.evaluate(()=>refreshRoom());
-    await a.locator('.board-receipt').waitFor();
-    assert.equal(await a.locator('.board .agreement-dispute-tag').count(),0,'Resolved objections remove the warning badge');
-    await a.click('[data-tool-view=chat]');
+    await a.evaluate(() => window.NUNCHI_API_CONFIG.agreementReviewV2 = true);
+    failCard = true;
+    await a.click('[data-card-objection="2"] [type=submit]');
+    await a.locator('#api-error:not([hidden])').waitFor();
+    assert.equal(cards[1].status,'PENDING');
+    assert.match(await a.locator('[data-card-objection="2"] textarea').inputValue(), /Friday/);
+    await a.click('#dismiss-error');
+    await a.click('[data-card-objection="2"] [type=submit]');
+    await a.locator('[data-card-id="2"].is-rejected').waitFor();
+    assert.equal(await a.locator('[data-card-id="2"] button').count(),0);
+    assert.equal(await a.locator('[data-card-id="2"] script').count(),0);
+    await b.evaluate(()=>refreshRoom());
+    await b.locator('[data-card-id="2"].is-rejected').waitFor();
+    await a.reload(); await a.waitForFunction(()=>ready);
+    await a.locator('[data-card-id="2"].is-rejected').waitFor();
+    await a.screenshot({path:path.join(require('os').tmpdir(),'nunchi-card-rejection.png'),fullPage:true});
+    failSettlement = true;
     await a.click('#settle-agreements');
-    await a.waitForFunction(()=>!pendingActions.size);
-    assert.equal(receipts.length,1,'No eligible cards must not create an empty receipt');
-    assert.equal(await a.locator('#toast').textContent(),await a.evaluate(()=>t('api.noEligibleCards')));
-    // After the second card reaches the board, only this new card is included.
-    cards[1].status='CONFIRMED';
-    cards[1].confirmations=rooms[0].members.map(member=>({userId:member.id,confirmedAt:new Date().toISOString()}));
+    await a.locator('#api-error:not([hidden])').waitFor();
+    assert.equal(receipts.length,0);
+    await a.click('#dismiss-error');
+    await a.evaluate(()=>{document.querySelector('#settle-agreements').click(); document.querySelector('#settle-agreements').click();});
+    await a.locator('.meeting-receipt').waitFor();
+    assert.equal(receipts.length,1);
+    assert.equal(receipts[0].status,'CONFIRMED');
+    assert.deepEqual(receipts[0].items.map(item=>item.sourceCardId),[1]);
+    assert.equal(await a.locator('[data-receipt-confirm],[data-dispute-item]').count(),0);
+    assert.equal(await a.locator('[data-export-item]').isEnabled(),true);
+    await a.click('[data-export-item]');
+    await a.waitForFunction(()=>workspaceTool==='calendar');
+    await b.click('[data-tool-view=receipt]');
+    await b.locator('[data-export-item]').waitFor();
+    assert.equal(await b.locator('[data-export-item]').isEnabled(),true);
+    await b.click('[data-export-item]');
+    await b.waitForFunction(()=>workspaceTool==='calendar');
+    await a.click('[data-tool-view=chat]'); await a.evaluate(()=>refreshRoom());
+    await a.locator('.board-receipt.is-final').waitFor();
     await a.click('#settle-agreements');
-    await a.waitForFunction(()=>serverTools.receipt?.id===2);
-    assert.deepEqual(receipts[1].items.map(item=>item.sourceCardId),[2],'Already-approved cards stay excluded');
-    assert.equal(await a.locator('#receipt-choice option').count(),3);
-    await b.evaluate(()=>testSocket.onmessage({data:'MESSAGE\ndestination:/topic/rooms/1\n\n'+JSON.stringify({type:'RECEIPT_CREATED',data:{roomId:1,receiptId:2}})+'\0'}));
-    await b.locator('#receipt-choice option[value="2"]').waitFor({state:'attached'});
-    await a.reload();
-    await a.waitForFunction(()=>ready&&activeWorkspace()?.id==='1');
-    await a.evaluate(()=>{appState.receiptIds={};saveState();});
-    await a.click('[data-tool-view=receipt]');
-    await a.waitForFunction(()=>serverTools.receipt?.id===2);
-    assert.equal(await a.locator('#receipt-choice option').count(),3,'Receipt history is fetched from the server after reload');
-    cards.push({...clone(cards[0]),id:3,title:'Third card'});
+    await a.waitForFunction(()=>!document.querySelector('#settle-agreements').disabled);
+    assert.equal(receipts.length,1);
+    assert.equal(requests.filter(r=>r.p.includes('/responses')||r.p.includes('/meetings')).length,0);
     await a.click('[data-tool-view=chat]');
-    await a.click('#settle-agreements');
-    await a.waitForFunction(()=>serverTools.receipt?.id===3);
-    assert.deepEqual(receipts[2].items.map(item=>item.sourceCardId),[2,3]);
-    await a.evaluate(()=>refreshRoom());
-    await a.click('[data-tool-view=chat]');
-    assert.equal(await a.locator('[data-open-board-receipt="3"]').count(),1,'Two cards in the same receipt produce one board cell');
-    assert.equal(await a.locator('.board-receipt').count(),3);
-    assert.equal(await a.locator('#board-count').textContent(),'3','Board count is receipt count, not card count');
-    assert.equal(await a.locator('#board-cards h3, #board-cards .agreement-meta, #board-cards [data-export-card]').count(),0);
-    await a.click('[data-open-board-receipt="3"]');
-    await a.waitForFunction(()=>serverTools.receipt?.id===3);
-    const secondItemId=receipts[2].items.find(item=>item.sourceCardId===2).id;
-    await a.click('[data-receipt-confirm="'+secondItemId+'"]');
-    await b.click('[data-refresh-tools]');
-    await b.locator('#receipt-choice option[value="3"]').waitFor({state:'attached'});
-    await b.selectOption('#receipt-choice','3');
-    await b.locator('[data-receipt-confirm="'+secondItemId+'"]').waitFor();
-    await b.click('[data-receipt-confirm="'+secondItemId+'"]');
-    await b.waitForFunction(itemId=>serverTools.receipt?.items.find(item=>item.id===itemId)?.status==='CONFIRMED',secondItemId);
-    assert.equal(receipts[2].status,'PENDING','One confirmed item does not finalize the whole receipt');
-    await a.click('[data-tool-view=chat]');
-    await a.click('#settle-agreements');
-    await a.waitForFunction(()=>serverTools.receipt?.id===4);
-    assert.deepEqual(receipts[3].items.map(item=>item.sourceCardId),[3],'Exclusion is based on each item, not whole-receipt approval');
-    await a.evaluate(()=>refreshRoom());
-    await a.click('[data-tool-view=chat]');
-    await a.locator('.board').screenshot({path:path.join(require('os').tmpdir(),'nunchi-settled-board.png')});
-    await a.click('.board-receipt[data-open-board-receipt="1"]');
-    await a.waitForFunction(()=>workspaceTool==='receipt'&&serverTools.receipt?.id===1);
-    assert.equal(await a.locator('#receipt-choice').inputValue(),'1','Receipt cell opens its own older receipt rather than the latest receipt');
+    const beforeMulti = messages.length;
+    await a.fill('#message-input','maybe Sunday, earlier if possible');
+    await a.locator('#message-input').press('Enter');
+    await a.locator('#meaning-dialog[open]').waitFor();
+    await a.click('[data-expression="0"][data-meaning="ACCEPT"]');
+    assert.equal(messages.length,beforeMulti,'Selecting one expression must never send');
+    assert.equal(await a.locator('#send-meanings').isDisabled(),true);
+    await a.click('[data-expression="1"][data-meaning="OTHER"]');
+    await a.fill('[data-custom-expression="1"]','   ');
+    assert.equal(await a.locator('#send-meanings').isDisabled(),true);
+    await a.fill('[data-custom-expression="1"]','Please deliver before Friday.');
+    assert.equal(await a.locator('#send-meanings').isEnabled(),true);
+    const preview = await a.locator('#meaning-preview-text').textContent();
+    assert.match(preview,/I can deliver Sunday/);
+    assert.match(preview,/Please deliver before Friday/);
+    failSend = true;
+    await a.click('#send-meanings');
+    await a.locator('#meaning-error:not([hidden])').waitFor();
+    await a.waitForFunction(()=>!busy);
+    assert.equal(await a.locator('[data-custom-expression="1"]').inputValue(),'Please deliver before Friday.');
+    assert.equal(messages.length,beforeMulti);
+    await a.click('#send-meanings');
+    await a.waitForFunction(()=>pending===null&&!busy);
+    assert.equal(messages.length,beforeMulti+1);
+    assert.equal(messages.at(-1).originalText,"maybe Sunday, earlier if possible");
+    assert.equal(messages.at(-1).intentSelections.length,2);
+    assert.equal(messages.at(-1).intentSelections[1].customText,"Please deliver before Friday.");
+    await b.click('[data-tool-view=chat]');
+    await b.evaluate(()=>refreshRoom());
+    assert(await b.locator('.meaning-confirmation').filter({hasText:'Please deliver before Friday.'}).count());
+    assert.equal(messages.at(-1).selectedIntent,null);
+    assert.equal(await a.locator('#message-input').inputValue(),'');
+    await a.fill('#message-input','maybe tomorrow');
+    await a.locator('#message-input').press('Enter');
+    await a.locator('#meaning-dialog[open]').waitFor();
+    const expiredAnalysis = await a.evaluate(()=>pending.analysisId);
+    await a.click('[data-meaning=UNDECIDED]');
+    await a.route('https://api.test/api/rooms/1/messages', route=>route.fulfill({status:410,contentType:'application/json',body:JSON.stringify({success:false,error:{code:'ANALYSIS_EXPIRED',message:'Please analyze again.'}})}),{times:1});
+    await a.click('#send-meanings');
+    await a.locator('#reanalyze-meaning:not([hidden])').waitFor();
+    await a.waitForFunction(()=>!busy);
+    assert.equal(await a.locator('#send-meanings').isDisabled(),true);
+    await a.click('#reanalyze-meaning');
+    await a.waitForFunction(old=>pending?.analysisId && pending.analysisId!==old,expiredAnalysis);
+    assert.equal(await a.locator('#send-meanings').isDisabled(),true);
+    await a.click('#send-original');
+    await a.waitForFunction(()=>!pending&&!busy);
+    assert.equal(messages.at(-1).sendOriginal,true);
+    assert.equal(messages.at(-1).intentSelections.length,0);
     await a.click("[data-tool-view=todo]");
     await a.fill("#tool-todo-form input", "Server task");
     await a.click("#tool-todo-form button");
@@ -676,11 +707,20 @@ async function routeAPI(route) {
     assert.equal(await a.locator("[data-todo-check]").isChecked(), true);
     await a.click("[data-delete-todo]");
     await a.waitForFunction(() => serverTools.todos.length === 0);
+    assert.equal(await a.locator("#logout").isVisible(), false);
+    await a.click("#profile-toggle");
+    assert.equal(await a.locator("#logout").isVisible(), true);
+    await a.keyboard.press("Escape");
+    assert.equal(await a.locator("#profile-toggle").getAttribute("aria-expanded"), "false");
+    await a.click("#profile-toggle");
     for (const lang of ["ko", "en", "vi", "de"]) {
       await a.selectOption("#ui-language", lang);
       await a.waitForFunction(() => I18n.language === document.querySelector("#ui-language").value);
       assert.equal(await a.locator("html").getAttribute("lang"), lang);
     }
+    await a.click("#profile-toggle");
+    await a.click('[data-tool-view="chat"]');
+    await a.screenshot({path:path.join(require("os").tmpdir(),"nunchi-layout-desktop.png"),fullPage:true});
     await a.setViewportSize({ width: 390, height: 844 });
     assert.equal(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await a.screenshot({
@@ -690,6 +730,8 @@ async function routeAPI(route) {
     await a.reload();
     await a.waitForFunction(() => ready);
     assert.equal(await a.locator("html").getAttribute("lang"), "de");
+    if (await a.locator("#menu").isVisible()) await a.click("#menu");
+    await a.click("#profile-toggle");
     await a.click("#logout");
     await a.waitForURL("**/login.html");
     await a.fill("#user-id", "1");
@@ -697,6 +739,7 @@ async function routeAPI(route) {
     await a.waitForURL("**/test.html");
     await a.waitForFunction(() => ready);
     assert.equal(await a.locator("#profile-name").textContent(), "Alice");
+    assert.equal(await a.locator("html").getAttribute("lang"), "en", "Fresh login restores the server account language despite an old UI override");
     const state = await a.evaluate(() => JSON.parse(localStorage.getItem(STORAGE_KEY)));
     assert.equal(state.workspaces, undefined);
     assert.equal(state.messages, undefined);
@@ -715,6 +758,8 @@ async function routeAPI(route) {
     const memberWrites = requests.filter(
       (r) => r.method === "POST" && r.p.endsWith("/members"),
     ).length;
+    if (await a.locator("#menu").isVisible()) await a.click("#menu");
+    await a.click("#profile-toggle");
     await a.click("#logout");
     await a.waitForURL("**/login.html");
     await a.fill("#user-id", "2");

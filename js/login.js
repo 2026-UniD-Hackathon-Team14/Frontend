@@ -13,7 +13,8 @@ async function submit(button, errorElement, action) {
     location.assign("./test.html");
   } catch (error) {
     errorElement.textContent =
-      t(error.message) + (error.serverMessage ? " · " + error.serverMessage : "");
+      t(error.message) +
+      (error.serverMessage ? " · " + error.serverMessage : "");
     errorElement.hidden = false;
   } finally {
     button.disabled = false;
@@ -22,8 +23,13 @@ async function submit(button, errorElement, action) {
 form.onsubmit = (event) => {
   event.preventDefault();
   if (form.reportValidity())
-    submit(form.querySelector("button"), document.getElementById("form-status"), () =>
-      UserAPI.loadUser(document.getElementById("user-id").value),
+    submit(
+      form.querySelector("button"),
+      document.getElementById("form-status"),
+      () =>
+        UserAPI.loadUser(document.getElementById("user-id").value, {
+          resetLanguage: true,
+        }),
     );
 };
 document.getElementById("open-signup").onclick = () => {
@@ -43,10 +49,13 @@ document.getElementById("signup-form").onsubmit = (event) => {
   const name = document.getElementById("signup-name");
   validationMessage(name, name.value.trim() ? "" : "nameRequired");
   if (!event.target.reportValidity()) return;
-  submit(document.getElementById("signup-submit"), document.getElementById("signup-error"), () =>
-    UserAPI.register({
-      name: name.value,
-      language: document.getElementById("signup-language").value,
-    }),
+  submit(
+    document.getElementById("signup-submit"),
+    document.getElementById("signup-error"),
+    () =>
+      UserAPI.register({
+        name: name.value,
+        language: document.getElementById("signup-language").value,
+      }),
   );
 };

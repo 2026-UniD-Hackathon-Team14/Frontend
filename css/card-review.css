@@ -1,0 +1,93 @@
+﻿/* Objections are made on cards, before settlement. */
+.card-objection-form {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+.card-objection-form label {
+  display: block;
+  font-weight: 600;
+}
+.card-objection-form textarea {
+  display: block;
+  width: 100%;
+  min-height: 110px;
+  margin-top: 8px;
+  padding: 12px;
+  resize: vertical;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-text);
+}
+.card-objection-form p {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+.card-objection-form > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.agreement-confirmation {
+  flex-wrap: wrap;
+}
+.agreement-object {
+  color: #a63e37;
+  border-color: #d9aaa6;
+}
+.chat-agreement:has(.card-objection-form) {
+  width: min(100%, 620px);
+}
+.chat-agreement.is-rejected {
+  position: relative;
+  isolation: isolate;
+  background: #eceeed;
+  border-color: #b5bbb8;
+  box-shadow: none;
+  color: #656c68;
+  overflow: hidden;
+}
+.is-rejected .agreement-body {
+  color: inherit;
+}
+.card-rejection-cross {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+.card-rejection-cross path {
+  fill: none;
+  stroke: #7a827e;
+  stroke-width: 2;
+  opacity: 0.22;
+}
+.card-rejection-notice {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f5f6f5eb;
+}
+.card-rejection-notice p {
+  margin: 5px 0;
+}
+.card-rejection-notice blockquote {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid #9da6a0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.board-receipt.is-final {
+  border: 1px solid #48ac78;
+  box-shadow: 0 0 14px #48ac781a;
+}
+
+/* Only the check glyph is green; preserve its surrounding label and surface. */
+.agreement-confirm .confirmation-check,
+.message .meaning-confirmation > span[aria-hidden="true"] {
+  color: #078432;
+}

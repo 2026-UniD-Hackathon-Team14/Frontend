@@ -1,7 +1,10 @@
 "use strict";
 window.API = (() => {
   const config = window.NUNCHI_API_CONFIG;
-  async function request(path, { method = "GET", body, userId = UserAPI.user?.id, signal } = {}) {
+  async function request(
+    path,
+    { method = "GET", body, userId = UserAPI.user?.id, signal } = {},
+  ) {
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (signal?.aborted) abort();
@@ -22,7 +25,9 @@ window.API = (() => {
       try {
         result = text ? JSON.parse(text) : null;
       } catch {
-        throw Object.assign(new Error("api.invalidResponse"), { status: response.status });
+        throw Object.assign(new Error("api.invalidResponse"), {
+          status: response.status,
+        });
       }
       if (!response.ok || result?.success === false) {
         throw Object.assign(new Error("api.requestFailed"), {
@@ -46,11 +51,19 @@ window.API = (() => {
   }
   function id(value) {
     const number = Number(value);
-    if (!/^\d+$/.test(String(value).trim()) || !Number.isSafeInteger(number) || number < 1)
+    if (
+      !/^\d+$/.test(String(value).trim()) ||
+      !Number.isSafeInteger(number) ||
+      number < 1
+    )
       throw new Error("api.invalidId");
     return number;
   }
-  return { request, id, query: () => "?lang=" + encodeURIComponent(I18n.language) };
+  return {
+    request,
+    id,
+    query: () => "?lang=" + encodeURIComponent(I18n.language),
+  };
 })();
 window.UserAPI = (() => {
   const key = "nunchichat.server-user.v1";
@@ -62,10 +75,13 @@ window.UserAPI = (() => {
       user = saved;
     }
   } catch {}
-  function applyUser(response) {
+  function applyUser(response, { resetLanguage = false } = {}) {
     const data = response?.data ?? response;
     API.id(data?.id);
-    if (typeof data.name !== "string" || !I18n.supported.includes(data.language))
+    if (
+      typeof data.name !== "string" ||
+      !I18n.supported.includes(data.language)
+    )
       throw new Error("api.invalidResponse");
     user = { id: String(data.id), name: data.name, language: data.language };
     try {
@@ -74,25 +90,34 @@ window.UserAPI = (() => {
     let language = user.language;
     try {
       const saved = localStorage.getItem("nunchichat.ui-language." + user.id);
-      if (I18n.supported.includes(saved)) language = saved;
+      if (resetLanguage)
+        localStorage.removeItem("nunchichat.ui-language." + user.id);
+      else if (I18n.supported.includes(saved)) language = saved;
     } catch {}
     I18n.setLanguage(language, { source: "user" });
-    document.dispatchEvent(new CustomEvent("userchange", { detail: { user: { ...user } } }));
+    document.dispatchEvent(
+      new CustomEvent("userchange", { detail: { user: { ...user } } }),
+    );
     return { ...user };
   }
   async function register({ name, language }) {
     if (!name?.trim()) throw new Error("nameRequired");
-    if (!I18n.supported.includes(language)) throw new Error("unsupportedLanguage");
+    if (!I18n.supported.includes(language))
+      throw new Error("unsupportedLanguage");
     return applyUser(
       await API.request("/users", {
         method: "POST",
         userId: null,
         body: { name: name.trim(), language },
       }),
+      { resetLanguage: true },
     );
   }
-  async function loadUser(id) {
-    return applyUser(await API.request("/users/" + API.id(id), { userId: null }));
+  async function loadUser(id, options) {
+    return applyUser(
+      await API.request("/users/" + API.id(id), { userId: null }),
+      options,
+    );
   }
   function logout() {
     user = null;
@@ -102,9 +127,16 @@ window.UserAPI = (() => {
     location.assign("./login.html");
   }
   document.addEventListener("languagechange", (event) => {
-    if (user && event.detail.source !== "user")
+    if (
+      user &&
+      document.body.dataset.page === "main" &&
+      event.detail.source === "ui"
+    )
       try {
-        localStorage.setItem("nunchichat.ui-language." + user.id, event.detail.language);
+        localStorage.setItem(
+          "nunchichat.ui-language." + user.id,
+          event.detail.language,
+        );
       } catch {}
   });
   return {
@@ -121,7 +153,9 @@ window.ContentAPI = {
   messageText(message) {
     return (
       message.translations?.[I18n.language] ??
-      (message.translatedLanguage === I18n.language ? message.translatedText : null) ??
+      (message.translatedLanguage === I18n.language
+        ? message.translatedText
+        : null) ??
       message.originalText ??
       ""
     );
