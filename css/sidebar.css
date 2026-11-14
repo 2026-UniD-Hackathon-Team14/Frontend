@@ -109,3 +109,11 @@
   color: var(--muted);
   font-size: 10px;
 }
+
+/* Plain line icons; inherit each navigation item's text color. */
+.tool-nav .tool-nav-icon {
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+}

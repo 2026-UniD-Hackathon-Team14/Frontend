@@ -156,3 +156,16 @@
   .tool-surface { padding: 16px; }
   .month-controls { flex-wrap: wrap; }
 }
+
+.board-unsettled-card .board-card-content {
+  margin: 3px 0 7px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.board-unsettled-card .board-card-due {
+  padding-top: 7px;
+  border-top: 1px solid var(--color-border);
+}
