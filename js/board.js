@@ -9,7 +9,8 @@ function agreementMembers() {
 }
 function agreementComplete(card) {
   const members = agreementMembers();
-  return members.length > 0 && members.every((member) => card.confirmedIds.includes(member.id));
+  return members.length > 0 && members.every((member) => card.confirmedIds.includes(member.id)) &&
+    !(typeof receiptCardDisputed === "function" && receiptCardDisputed(card));
 }
 function agreementName(id) {
   return agreementMembers().find((member) => member.id === id)?.name || "알 수 없는 팀원";
@@ -62,6 +63,7 @@ function renderAgreementViewer() {
   $("#create-card").disabled = !activeWorkspace();
 }
 function renderBoard() {
+  if (typeof refreshWorkspaceTools === "function") refreshWorkspaceTools();
   renderAgreementViewer();
   const confirmed = agreementCards().filter(agreementComplete);
   const visible = confirmed.filter((card) => boardFilter === "전체" || card.type === boardFilter);
@@ -169,6 +171,10 @@ function initBoard() {
     const confirm = event.target.closest("button[data-confirm-agreement]");
     if (confirm) {
       const card = agreementCards().find((item) => item.id === confirm.dataset.confirmAgreement);
+      if (card && typeof receiptCardDisputed === "function" && receiptCardDisputed(card)) {
+        toast("영수증에 이의가 남아 있어요. 영수증에서 내용을 확인하고 재확인을 요청해 주세요.");
+        return;
+      }
       if (
         !card ||
         !agreementMembers().some((member) => member.id === agreementViewer) ||
