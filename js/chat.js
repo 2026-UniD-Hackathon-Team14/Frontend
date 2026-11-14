@@ -1,7 +1,14 @@
 function renderMessages() {
   const el = $("#messages");
+  if (!activeWorkspace()) {
+    el.innerHTML =
+      '<div class="empty">참여 중인 워크스페이스가 없어요. + 버튼으로 새로운 공간을 만들어 주세요.</div>';
+    return;
+  }
   el.innerHTML =
-    '<div class="date-divider">자료조사</div>' +
+    '<div class="date-divider">' +
+    esc(activeWorkspace().name) +
+    "</div>" +
     chats[channel]
       .map((m, i) => {
         if (m.agreement) return renderAgreementMessage(m.agreement);
@@ -26,11 +33,12 @@ function pushMessage(text, meaning = "", translation = "") {
     meaning,
     translation,
   });
+  saveState();
   $("#message-input").value = "";
   renderMessages();
 }
 async function sendMessage() {
-  if (busy) return;
+  if (busy || !activeWorkspace()) return;
   const text = $("#message-input").value.trim();
   if (!text) return;
   busy = true;
@@ -69,9 +77,5 @@ function initChat() {
       sendMessage();
     }
   });
-  $("#sample").onclick = () => {
-    $("#message-input").value = "그 부분은 일단 생각해볼게요";
-    $("#message-input").focus();
-  };
   renderMessages();
 }
