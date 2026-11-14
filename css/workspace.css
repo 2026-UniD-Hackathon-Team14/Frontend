@@ -1,0 +1,195 @@
+/* 로그인 화면과 동일한 두 말풍선 브랜드 */
+:root {
+  --green: #7041d9;
+  --light: #f1ebfc;
+}
+.logo {
+  color: #432b60;
+  font-size: 25px;
+  letter-spacing: -0.8px;
+}
+.brand-mark {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+.brand-mark::before,
+.brand-mark::after {
+  position: absolute;
+  width: 23px;
+  height: 21px;
+  border-radius: 8px 8px 8px 2px;
+  content: "";
+}
+.brand-mark::before {
+  top: 2px;
+  left: 0;
+  background: #7041d9;
+}
+.brand-mark::after {
+  right: 0;
+  bottom: 2px;
+  background: #c3a6ef;
+}
+.workspace-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 10px 7px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: #8a8197;
+  font-weight: 700;
+}
+.workspace-label button {
+  width: 30px;
+  height: 30px;
+  font-size: 21px;
+  border-radius: 8px;
+  color: #7041d9;
+  background: #ece5f8;
+}
+.workspace-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace strong,
+.workspace small {
+  overflow-wrap: anywhere;
+}
+.nav-btn.active {
+  color: #6235b6;
+  background: #ebe3f7;
+}
+#room-title {
+  overflow-wrap: anywhere;
+}
+.room-members {
+  flex-wrap: wrap;
+}
+.invite-button {
+  color: #7041d9;
+  border-color: #ded4ef;
+  font-size: 11px;
+  padding: 5px 9px;
+}
+.room-members .people {
+  flex-wrap: wrap;
+  max-width: 180px;
+  row-gap: 4px;
+}
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.optional {
+  color: #9b92a4;
+  font-size: 10px;
+  font-weight: 400;
+}
+.local-note {
+  color: #7f6c96;
+  background: #f5f0fc;
+  padding: 11px 13px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 16px;
+}
+.invitation-heading {
+  font-size: 13px;
+  margin-top: 25px;
+}
+.invitation-item {
+  padding: 14px 0;
+  border-top: 1px solid #e9e2ef;
+}
+.invitation-item strong {
+  display: block;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.invitation-item small {
+  display: block;
+  color: #99909f;
+  font-size: 11px;
+  margin-bottom: 7px;
+  overflow-wrap: anywhere;
+}
+.invitation-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+@media (max-width: 900px) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+  .content {
+    flex: 1 0 480px;
+  }
+  .messages {
+    max-height: 45vh;
+  }
+  .board {
+    display: flex;
+    flex-shrink: 0;
+    overflow: visible;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+@media (max-width: 600px) {
+  .room-members .people {
+    max-width: 110px;
+  }
+}
+
+/* 워크스페이스 관리 */
+.workspace-label button {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  font-weight: 400;
+}
+.compose-bottom {
+  justify-content: flex-end;
+}
+.leave-button {
+  margin-left: auto;
+  color: #c43e4e;
+  border-color: #ebc7cd;
+  background: #fff;
+}
+.btn.danger {
+  background: #c43e4e;
+  border-color: #c43e4e;
+  color: white;
+}
+.leave-button:disabled {
+  cursor: default;
+}
+@media (max-width: 600px) {
+  .leave-button {
+    font-size: 10px;
+    padding: 6px 8px;
+    white-space: normal;
+    max-width: 100px;
+  }
+}
+
+/* main 합의 카드와 기존 워크스페이스 반응형 통합 */
+.agreement-people {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+.agreement-confirmation {
+  flex-wrap: wrap;
+}

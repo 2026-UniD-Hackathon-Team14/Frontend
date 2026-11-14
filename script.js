@@ -1,7 +1,9 @@
 "use strict";
-
-// 앱 진입점: test.html에서 기능 파일을 먼저 순서대로 불러옵니다.
+// 공통 상태와 기능 파일을 불러온 뒤 화면을 초기화합니다.
 initSidebar();
 initBoard();
 initMeaning();
 initChat();
+initInvitations();
+
+initWorkspaceLeave();
