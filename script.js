@@ -8,6 +8,7 @@ else {
   initChat();
   initInvitations();
   initWorkspaceTools();
+  initCalendarPreview();
   initRoomLeave();
   const profileToggle = $("#profile-toggle");
   const profileMenu = $("#profile-menu");

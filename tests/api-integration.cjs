@@ -628,6 +628,19 @@ async function routeAPI(route) {
     assert.equal(await a.locator('[data-export-item]').isEnabled(),true);
     await a.click('[data-export-item]');
     await a.waitForFunction(()=>workspaceTool==='calendar');
+    await a.locator('[data-event-preview]').first().hover();
+    await a.locator('#calendar-preview').filter({hasText:'Original details'}).waitFor();
+    assert((await a.locator('#calendar-preview').textContent()).includes('Alice'));
+    await a.evaluate(()=>loadWorkspaceTool({quiet:true}));
+    await a.waitForTimeout(350);
+    assert.equal(await a.locator('#calendar-preview').isVisible(),true,'Polling keeps the open calendar preview after pointer transitions');
+    await a.locator('.tools-heading h2').hover();
+    await a.locator('#calendar-preview').waitFor({state:'hidden'});
+    await a.locator('[data-event-preview]').first().focus();
+    await a.locator('#calendar-preview').waitFor({state:'visible'});
+    await a.keyboard.press('Escape');
+    await a.locator('#calendar-preview').waitFor({state:'hidden'});
+
     await b.click('[data-tool-view=receipt]');
     await b.locator('[data-export-item]').waitFor();
     assert.equal(await b.locator('[data-export-item]').isEnabled(),true);
