@@ -1,0 +1,37 @@
+:root {
+  /* primitives (숫자가 클수록 어두움) */
+  --sand-50: #fdfcfb;
+  --sand-100: #faf7f5;
+  --sand-200: #f7f3f0;
+  --sand-300: #f2ede8;
+  --sand-400: #e4dcd5;
+  --sand-600: #d0c4b8;
+  --sand-accent: #e6ccbb;
+  --navy-400: #5d6979;
+  --navy-600: #304564;
+  --navy-700: #212f42;
+  --navy-800: #18202c;
+  --navy-primary: #1f3a5f;
+  --amber-50: #fbf0d6;
+  --amber-500: #d9a441;
+  --amber-800: #7a5410;
+  --coral-50: #fae7e4;
+  --coral-100: #f2c4be;
+  --coral-500: #d9695f;
+  --coral-600: #a94a42;
+  --coral-800: #8e3c35;
+
+  /* semantic: 새 코드는 이 이름을 쓰세요 */
+  --color-primary: var(--navy-primary); /* 버튼, 상단 안내 바, 선택 강조 */
+  --color-accent: var(--sand-accent); /* 샌드: 아바타, 배지, 로고 */
+  --color-text-strong: var(--navy-800); /* 제목 글자 */
+  --color-text: var(--navy-800); /* 본문 글자 */
+  --color-text-muted: var(--navy-600); /* 보조 글자 */
+  --color-text-subtle: var(--navy-400); /* 희미한 글자 */
+  --color-bg-side: var(--sand-100); /* 사이드바 배경 */
+  --color-bg-surface: var(--sand-50); /* 패널, 미리보기 배경 */
+  --color-border: var(--sand-300); /* 기본 경계선 */
+  --color-border-strong: var(--sand-400); /* 강조 경계선 */
+  --color-warning: var(--amber-500); /* 모호 표현 하이라이트 */
+  --color-danger: var(--coral-500); /* 오해 위험, 이의 제기 */
+}

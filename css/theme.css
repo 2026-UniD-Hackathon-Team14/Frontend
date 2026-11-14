@@ -1,0 +1,421 @@
+/* 샌드 + 네이비 테마. 기존 레이아웃, 크기, 기능은 변경하지 않습니다. */
+:root {
+  --ink: var(--color-text);
+  --muted: var(--color-text-subtle);
+  --green: var(--color-primary);
+  --light: var(--sand-200);
+  --line: var(--color-border);
+  --paper: var(--color-bg-surface);
+  --orange: var(--color-warning);
+  --agreement-success: var(--color-primary);
+}
+body {
+  color: var(--color-text);
+  background: var(--color-bg-surface);
+}
+.side {
+  background: var(--sand-200);
+  border-color: var(--color-border);
+}
+.logo {
+  color: var(--color-primary);
+}
+.tagline,
+.profile small,
+.nav-label,
+.workspace-label {
+  color: var(--color-text-subtle);
+}
+.nav-btn {
+  color: var(--color-text-muted);
+}
+.nav-btn.active {
+  background: #fff;
+  color: var(--color-primary);
+  box-shadow: 0 1px 3px #1f3a5f18;
+}
+.workspace-label button {
+  color: var(--color-primary);
+  background: transparent;
+}
+.workspace {
+  background: #fff;
+  border-color: var(--color-border-strong);
+}
+.square,
+.nav-btn .count {
+  background: var(--color-accent);
+  color: var(--color-primary);
+}
+.top,
+.content {
+  background: #fff;
+}
+.top,
+.room-bar {
+  border-color: var(--color-border);
+}
+.breadcrumb,
+.room-bar,
+.room-language {
+  color: var(--color-text-subtle);
+}
+.room-bar strong,
+h1 {
+  color: var(--color-text-strong);
+}
+.avatar {
+  background: var(--sand-400);
+  color: var(--color-text);
+}
+.avatar.me {
+  background: var(--color-primary);
+  color: #fff;
+}
+.avatar.lena {
+  background: var(--color-accent);
+  color: var(--color-primary);
+}
+.avatar.linh {
+  background: var(--sand-300);
+  color: var(--color-text);
+}
+.btn {
+  color: var(--color-primary);
+  background: #fff;
+  border-color: var(--color-border-strong);
+}
+.btn.primary {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.btn.soft {
+  color: var(--color-primary);
+  background: var(--sand-200);
+  border-color: var(--color-border);
+}
+.invite-button {
+  color: var(--color-primary);
+  border-color: var(--color-border-strong);
+}
+.room-actions .agreement-create,
+.room-actions .agreement-create:disabled {
+  color: var(--color-primary);
+  background: #fff;
+  border-color: var(--color-border-strong);
+}
+.leave-button {
+  color: var(--coral-600);
+  border-color: var(--coral-100);
+  background: #fff;
+}
+.btn.danger {
+  background: var(--coral-600);
+  border-color: var(--coral-600);
+  color: #fff;
+}
+.date-divider,
+.time,
+.hint,
+.link,
+.empty {
+  color: var(--color-text-subtle);
+}
+.date-divider::before,
+.date-divider::after {
+  background: var(--color-border);
+}
+.message .bubble {
+  background: var(--sand-200);
+  color: var(--color-text);
+}
+.message.mine .bubble {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+.message .lang {
+  background: var(--sand-100);
+  color: var(--color-text-muted);
+}
+.original {
+  color: var(--color-text-subtle);
+  background: var(--sand-50);
+  border-color: var(--color-border-strong);
+}
+.meaning {
+  color: var(--color-primary);
+}
+.compose-box {
+  border-color: var(--color-border-strong);
+  background: #fff;
+  box-shadow: 0 4px 14px #1f3a5f04;
+}
+.compose-box textarea {
+  color: var(--color-text);
+}
+.compose-box textarea::placeholder {
+  color: var(--color-text-subtle);
+}
+.compose-bottom {
+  color: var(--color-text-subtle);
+}
+.board {
+  background: var(--sand-100);
+  border-color: var(--color-border);
+}
+.eyebrow,
+.filter {
+  color: var(--color-text-subtle);
+}
+.board-title h2 {
+  color: var(--color-text-strong);
+}
+.counter,
+.pill {
+  background: var(--sand-300);
+  color: var(--color-primary);
+}
+.filter.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.card {
+  background: #fff;
+  border-color: var(--color-border);
+}
+.card p {
+  color: var(--color-text-muted);
+}
+.confirmed {
+  color: var(--color-primary);
+  border-color: var(--color-border);
+}
+.pill.purple {
+  color: var(--color-primary);
+  background: var(--sand-200);
+}
+.pill.orange {
+  color: var(--amber-800);
+  background: var(--amber-50);
+}
+dialog {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+  background: #fff;
+  box-shadow: 0 24px 90px #18202c26;
+}
+dialog::backdrop {
+  background: #18202c55;
+}
+dialog p,
+.optional {
+  color: var(--color-text-subtle);
+}
+.warning {
+  color: var(--amber-800);
+  background: var(--amber-50);
+  border-color: var(--color-warning);
+}
+.option {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+.option:hover {
+  border-color: var(--color-primary);
+  background: var(--sand-200);
+}
+.option small {
+  color: var(--color-text-subtle);
+}
+.field input,
+.field textarea,
+.field select {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  background: #fff;
+}
+.local-note {
+  background: var(--sand-100);
+  color: var(--color-text-muted);
+}
+.invitation-item {
+  border-color: var(--color-border);
+}
+.invitation-item small {
+  color: var(--color-text-subtle);
+}
+.toast {
+  background: var(--color-primary);
+  color: #fff;
+}
+.agreement-description,
+.agreement-byline,
+.agreement-viewer-label {
+  color: var(--color-text-subtle);
+}
+.agreement-viewer-label select {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  background: #fff;
+}
+.chat-agreement {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  box-shadow: 0 4px 14px #1f3a5f08;
+}
+.chat-agreement h3,
+.pinned-agreement h3 {
+  color: var(--color-text-strong);
+}
+.chat-agreement p.agreement-body,
+.pinned-agreement p {
+  color: var(--color-text-muted);
+}
+.agreement-tag {
+  background: var(--sand-300);
+  color: var(--color-primary);
+}
+.agreement-success-tag {
+  background: var(--sand-200);
+  color: var(--color-primary);
+}
+.agreement-meta > span {
+  background: var(--sand-100);
+  color: var(--color-text-muted);
+}
+.agreement-confirmation {
+  border-color: var(--color-border);
+}
+.agreement-person {
+  background: var(--sand-300);
+  color: var(--color-primary);
+}
+.agreement-person.person-0 {
+  background: var(--color-primary);
+  color: #fff;
+}
+.agreement-person.person-1 {
+  background: var(--color-accent);
+  color: var(--color-primary);
+}
+.agreement-person.person-2 {
+  background: var(--sand-400);
+  color: var(--color-text);
+}
+.agreement-person.person-3 {
+  background: var(--sand-200);
+  color: var(--color-text);
+}
+.agreement-person.is-waiting {
+  background: #fff;
+  color: var(--color-text-subtle);
+  border-color: var(--sand-600);
+}
+.agreement-person i {
+  background: var(--color-primary);
+}
+.agreement-progress,
+.agreement-progress b,
+.is-complete .agreement-progress {
+  color: var(--color-primary);
+}
+.agreement-confirm {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.agreement-confirm.is-checked {
+  background: var(--sand-200);
+  border-color: var(--sand-600);
+  color: var(--color-primary);
+}
+.chat-agreement.is-complete,
+.pinned-agreement.is-new {
+  border-color: var(--color-primary);
+}
+.pinned-agreement {
+  border-color: var(--color-border-strong);
+}
+.pinned-agreement.is-new {
+  box-shadow: 0 4px 16px #1f3a5f10;
+}
+.pinned-agreement .confirmed {
+  color: var(--color-primary);
+}
+.agreement-pin-notice {
+  background: var(--sand-200);
+  color: var(--color-text-muted);
+}
+.agreement-preview {
+  background: var(--sand-100);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+.agreement-preview small {
+  color: var(--color-text-subtle);
+}
+.agreement-kind label span,
+.assignee-chip {
+  color: var(--color-primary);
+  background: var(--sand-200);
+  border-color: var(--color-border-strong);
+}
+.agreement-kind input:checked + span {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+.assignee-chip > span {
+  background: var(--color-accent);
+  color: var(--color-primary);
+}
+.assignee-picker {
+  border-color: var(--color-border-strong);
+  background: var(--sand-50);
+}
+#assignee-add {
+  color: var(--color-primary);
+  border-color: var(--color-border-strong);
+}
+input {
+  accent-color: var(--color-primary);
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+/* 전원 확인된 합의: 초록색 테두리와 은은한 후광 */
+.chat-agreement.is-complete,
+.pinned-agreement,
+.pinned-agreement.is-new {
+  border-color: #54a879;
+  box-shadow:
+    0 0 0 1px rgb(84 168 121 / 12%),
+    0 0 18px rgb(84 168 121 / 14%);
+}
+.chat-agreement.is-complete .agreement-success-tag,
+.pinned-agreement .agreement-success-tag {
+  color: #237345;
+  background: #edf8f0;
+}
+.chat-agreement.is-complete .agreement-progress,
+.chat-agreement.is-complete .agreement-progress b,
+.pinned-agreement .confirmed {
+  color: #237345;
+}
+.chat-agreement.is-complete .agreement-person i {
+  background: #338653;
+}
+
+/* 워크스페이스 나가기: 빨간색 채움 버튼 */
+.leave-button {
+  color: #fff;
+  background: var(--coral-600);
+  border-color: var(--coral-600);
+}
