@@ -19,7 +19,7 @@ function leaveWorkspace(id) {
 
 function initWorkspaceLeave() {
   $("#leave-workspace").onclick = () => {
-    if (busy) return toast("메시지 처리가 끝난 뒤 다시 시도해 주세요.");
+    if (busy) return toast("busyRetry");
     const workspace = activeWorkspace();
     if (!workspace) return;
     leavingWorkspaceId = workspace.id;
@@ -30,7 +30,7 @@ function initWorkspaceLeave() {
     if (leaveWorkspace(leavingWorkspaceId)) {
       $("#leave-dialog").close();
       leavingWorkspaceId = null;
-      toast("워크스페이스에서 나왔어요.");
+      toast("workspaceLeft");
     }
   };
 }

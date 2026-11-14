@@ -12,44 +12,47 @@ function agreementComplete(card) {
   return members.length > 0 && members.every((member) => card.confirmedIds.includes(member.id));
 }
 function agreementName(id) {
-  return agreementMembers().find((member) => member.id === id)?.name || "알 수 없는 팀원";
+  return agreementMembers().find((member) => member.id === id)?.name || t("unknownMember");
 }
 function agreementDate(date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  }).format(new Date(date + "T12:00:00"));
+  return I18n.formatDate(date);
+}
+function cardTypeLabel(value) {
+  return t(
+    {
+      약속: "promise",
+      규칙: "rule",
+      공지: "notice",
+      PROMISE: "promise",
+      RULE: "rule",
+      NOTICE: "notice",
+    }[value] || "promise",
+  );
 }
 function agreementAvatars(card) {
   return (
-    '<div class="agreement-people" aria-label="팀원 확인 현황">' +
+    '<div class="agreement-people" aria-label="' +
+    esc(t("confirmationStatus")) +
+    '">' +
     agreementMembers()
       .map((member, index) => {
         const confirmed = card.confirmedIds.includes(member.id);
-        return `<span class="agreement-person ${confirmed ? "is-confirmed" : "is-waiting"} person-${index % 4}" title="${esc(member.name)} · ${confirmed ? "확인 완료" : "확인 대기"}"><span>${esc(Array.from(member.name)[0] || "?")}</span>${confirmed ? '<i aria-hidden="true">✓</i>' : ""}</span>`;
+        return `<span class="agreement-person ${confirmed ? "is-confirmed" : "is-waiting"} person-${index % 4}" title="${esc(member.name)} · ${esc(t(confirmed ? "confirmedState" : "pendingState"))}"><span>${esc(Array.from(member.name)[0] || "?")}</span>${confirmed ? '<i aria-hidden="true">✓</i>' : ""}</span>`;
       })
       .join("") +
     "</div>"
   );
 }
 function renderAgreementMessage(reference) {
-  // JSON 저장 후 채팅 객체와 카드 객체가 분리되므로 항상 ID로 원본 카드를 찾습니다.
-  const card = agreementCards().find((item) => item.id === reference.id);
+  const card = agreementCards().find((c) => c.id === reference.id);
   if (!card) return "";
-  const agreed = agreementComplete(card);
-  const mine = card.confirmedIds.includes(agreementViewer);
-  const members = agreementMembers();
-  const waiting = members.filter((member) => !card.confirmedIds.includes(member.id));
-  const count = members.length - waiting.length;
-  return `<article class="chat-agreement ${agreed ? "is-complete" : ""}" data-card-id="${esc(card.id)}">
-    <div class="agreement-card-heading"><span class="agreement-tag">합의 카드 · ${esc(card.type)}</span>${agreed ? '<span class="agreement-success-tag">전원 확인 완료</span>' : `<span class="agreement-byline">${esc(card.createdByName)}이 만듦 · ${esc(card.time)}</span>`}</div>
-    <h3>${esc(card.title)}</h3><p class="agreement-body">${esc(card.text)}</p>
-    <div class="agreement-meta"><span>담당 ${card.assigneeIds.map((id) => esc(agreementName(id))).join(" · ")}</span><span>마감 ${esc(agreementDate(card.date))}</span></div>
-    <div class="agreement-confirmation">${agreementAvatars(card)}<span class="agreement-progress"><b>${count}/${members.length}명 확인</b>${agreed ? " · 합의 보드에 고정됨 →" : " · " + waiting.map((member) => esc(member.name)).join(", ") + " 확인 대기"}</span>
-    ${agreed ? "" : `<button type="button" class="agreement-confirm ${mine ? "is-checked" : ""}" data-confirm-agreement="${esc(card.id)}" ${mine ? "disabled" : ""}>${mine ? "내가 확인함 ✓" : "확인"}</button>`}</div>
-  </article>${agreed ? `<div class="agreement-pin-notice">✓ 팀원 모두가 확인한 ‘${esc(card.title)}’ 카드가 합의 보드에 올라갔어요.</div>` : ""}`;
+  const agreed = agreementComplete(card),
+    mine = card.confirmedIds.includes(agreementViewer),
+    members = agreementMembers(),
+    waiting = members.filter((m) => !card.confirmedIds.includes(m.id));
+  const title = ContentAPI.cardText(card, "title"),
+    text = ContentAPI.cardText(card, "text");
+  return `<article class="chat-agreement ${agreed ? "is-complete" : ""}" data-card-id="${esc(card.id)}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))} · ${esc(cardTypeLabel(card.type))}</span>${agreed ? '<span class="agreement-success-tag">' + esc(t("allConfirmed")) + "</span>" : '<span class="agreement-byline">' + esc(t("createdBy", { name: card.createdByName, time: card.time })) + "</span>"}</div><h3>${esc(title)}</h3><p class="agreement-body">${esc(text)}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="agreement-confirmation">${agreementAvatars(card)}<span class="agreement-progress"><b>${esc(t("confirmationCount", { count: members.length - waiting.length, total: members.length }))}</b> · ${esc(agreed ? t("pinned") : t("waitingFor", { names: waiting.map((m) => m.name).join(", ") }))}</span>${agreed ? "" : `<button type="button" class="agreement-confirm ${mine ? "is-checked" : ""}" data-confirm-agreement="${esc(card.id)}" ${mine ? "disabled" : ""}>${esc(t(mine ? "confirmedByMe" : "confirm"))}</button>`}</div></article>${agreed ? '<div class="agreement-pin-notice">✓ ' + esc(t("pinNotice", { title })) + "</div>" : ""}`;
 }
 function renderAgreementViewer() {
   const members = agreementMembers();
@@ -64,22 +67,17 @@ function renderAgreementViewer() {
 function renderBoard() {
   renderAgreementViewer();
   const confirmed = agreementCards().filter(agreementComplete);
-  const visible = confirmed.filter((card) => boardFilter === "전체" || card.type === boardFilter);
+  const visible = confirmed.filter((c) => boardFilter === "전체" || c.type === boardFilter);
   $("#board-count").textContent = confirmed.length;
   $("#board-cards").innerHTML = visible.length
     ? [...visible]
         .reverse()
         .map(
-          (card) => `<article class="card pinned-agreement ${card.justPinned ? "is-new" : ""}">
-    <div class="agreement-card-heading"><span class="agreement-tag">${esc(card.type)}</span>${card.justPinned ? '<span class="agreement-success-tag">방금 고정</span>' : ""}</div>
-    <h3>${esc(card.title)}</h3><p>${esc(card.text)}</p><div class="agreement-meta"><span>담당 ${card.assigneeIds.map((id) => esc(agreementName(id))).join(" · ")}</span><span>${esc(agreementDate(card.date))}까지</span></div><div class="confirmed">✓ ${agreementMembers().length}명 모두 확인</div></article>`,
+          (card) =>
+            `<article class="card pinned-agreement ${card.justPinned ? "is-new" : ""}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(cardTypeLabel(card.type))}</span>${card.justPinned ? '<span class="agreement-success-tag">' + esc(t("justPinned")) + "</span>" : ""}</div><h3>${esc(ContentAPI.cardText(card, "title"))}</h3><p>${esc(ContentAPI.cardText(card, "text"))}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="confirmed">✓ ${esc(t("confirmedCount", { count: agreementMembers().length }))}</div></article>`,
         )
         .join("")
-    : '<p class="empty">' +
-      (confirmed.length
-        ? "이 종류의 합의가 없어요."
-        : "팀원 모두가 확인한 카드가 이곳에 고정돼요.") +
-      "</p>";
+    : '<p class="empty">' + esc(t(confirmed.length ? "emptyCategory" : "boardWaiting")) + "</p>";
   document.querySelectorAll(".filter").forEach((button) => {
     const selected = button.dataset.filter === boardFilter;
     button.classList.toggle("active", selected);
@@ -100,11 +98,13 @@ function initBoard() {
       )
       .join("");
     $("#agreement-preview-title").textContent =
-      ($("#agreement-title").value.trim() || "제목") +
-      " · 담당 " +
-      (names.join(" · ") || "미지정") +
+      ($("#agreement-title").value.trim() || t("title")) +
       " · " +
-      ($("#agreement-date").value || "마감일 미정");
+      t("assignee") +
+      " " +
+      (names.join(" · ") || t("unassigned")) +
+      " · " +
+      ($("#agreement-date").value || t("noDueDate"));
   }
   $("#create-card").addEventListener("click", () => {
     if (!activeWorkspace()) return;
@@ -126,13 +126,14 @@ function initBoard() {
     picker.hidden = !picker.hidden;
     $("#assignee-add").setAttribute("aria-expanded", String(!picker.hidden));
   });
+  document.addEventListener("languagechange", preview);
   form.addEventListener("input", preview);
   form.addEventListener("change", preview);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     for (const id of ["#agreement-title", "#agreement-text"]) $(id).value = $(id).value.trim();
     if (!form.reportValidity()) return;
-    if (!assignees().length) return toast("담당자를 한 명 이상 선택해 주세요.");
+    if (!assignees().length) return toast("chooseAssignee");
     const workspace = activeWorkspace();
     if (!workspace) return;
     const card = {
@@ -145,7 +146,7 @@ function initBoard() {
       assigneeIds: assignees(),
       confirmedIds: [],
       createdByName: currentUser.name,
-      time: new Date().toLocaleTimeString("ko-KR", {
+      time: new Date().toLocaleTimeString(I18n.locale, {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -158,7 +159,7 @@ function initBoard() {
     renderMessages();
     renderBoard();
     dialog.close();
-    toast("채팅에 카드를 올렸어요. 팀원 모두의 동의를 기다려요.");
+    toast("cardPosted");
   });
   $("#agreement-viewer").addEventListener("change", (event) => {
     if (!agreementMembers().some((member) => member.id === event.target.value)) return;
@@ -185,7 +186,7 @@ function initBoard() {
       saveState();
       renderMessages();
       renderBoard();
-      if (complete) toast("팀원 모두 확인했어요. 합의 보드에 고정했어요.");
+      if (complete) toast("cardPinned");
       return;
     }
     const filter = event.target.closest("button[data-filter]");

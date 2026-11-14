@@ -139,7 +139,7 @@ dialog p {
 .agreement-kind legend { margin-bottom: 6px; font-size: 12px; font-weight: 500; }
 .agreement-kind label { position: relative; flex: 1; cursor: pointer; }
 .agreement-kind input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.agreement-kind span { display: block; padding: 7px 12px; border: 1px solid #c5cdd8; border-radius: 7px; text-align: center; font-size: 13px; }
+.agreement-kind label > span { display: block; padding: 7px 12px; border: 1px solid #c5cdd8; border-radius: 7px; text-align: center; font-size: 13px; }
 .agreement-kind input:checked + span { border-color: #1f3a5f; color: #18202c; font-weight: 700; }
 .agreement-kind input:focus-visible + span { outline: 2px solid #1f3a5f; outline-offset: 3px; }
 .agreement-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

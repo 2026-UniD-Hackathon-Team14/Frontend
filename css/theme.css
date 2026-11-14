@@ -356,7 +356,7 @@ dialog p,
 .agreement-preview small {
   color: var(--color-text-subtle);
 }
-.agreement-kind label span,
+.agreement-kind label > span,
 .assignee-chip {
   color: var(--color-primary);
   background: var(--sand-200);

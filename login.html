@@ -1,577 +1,895 @@
-<html lang="ko"><head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#1F3A5F">
-  <title>눈치챗 · 로그인</title>
-  <style>
-    :root {
-      font-family: Inter, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-      color: #252332;
-      background: #f4f2f8;
-      font-synthesis: none;
-      --purple: #7041d9;
-      --purple-dark: #5d2dc0;
-      --muted: #727080;
-      --border: #dedce7;
-    }
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#1F3A5F" />
+    <title>눈치챗 · 로그인</title>
+    <style>
+      :root {
+        font-family: Inter, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+        color: #252332;
+        background: #f4f2f8;
+        font-synthesis: none;
+        --purple: #7041d9;
+        --purple-dark: #5d2dc0;
+        --muted: #727080;
+        --border: #dedce7;
+      }
 
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 32px; }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    button, input { -webkit-tap-highlight-color: transparent; }
-    button:focus-visible, input:focus-visible {
-      outline: 3px solid #ac8dee;
-      outline-offset: 4px;
-    }
-    button svg { pointer-events: none; }
-    svg { display: block; }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button,
+      input {
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid #ac8dee;
+        outline-offset: 4px;
+      }
+      button svg {
+        pointer-events: none;
+      }
+      svg {
+        display: block;
+      }
 
-    .auth-shell {
-      display: grid;
-      grid-template-columns: 1.05fr 1fr;
-      width: min(1280px, 100%);
-      min-height: min(820px, calc(100svh - 64px));
-      margin: 0 auto;
-      overflow: hidden;
-      border: 1px solid #e8e4ef;
-      border-radius: 28px;
-      background: #fff;
-      box-shadow: 0 22px 80px -40px #37205245;
-    }
+      .auth-shell {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        width: min(1280px, 100%);
+        min-height: min(820px, calc(100svh - 64px));
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid #e8e4ef;
+        border-radius: 28px;
+        background: #fff;
+        box-shadow: 0 22px 80px -40px #37205245;
+      }
 
-    .brand-panel {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      padding: 44px 48px 40px;
-      color: #fff;
-      background: radial-gradient(ellipse at 95% 100%, #65419a 0, transparent 65%),
-                  linear-gradient(145deg, #251437, #3c2259);
-    }
-    .brand-panel::after {
-      position: absolute;
-      right: -160px;
-      bottom: -180px;
-      width: 500px;
-      height: 500px;
-      border: 1px solid #ffffff10;
-      border-radius: 50%;
-      content: "";
-      pointer-events: none;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      width: fit-content;
-      font-size: 24px;
-      font-weight: 750;
-      letter-spacing: 1.6px;
-    }
-    .brand-mark {
-      position: relative;
-      display: block;
-      width: 34px;
-      height: 34px;
-    }
-    .brand-mark::before, .brand-mark::after {
-      position: absolute;
-      width: 23px;
-      height: 21px;
-      border-radius: 8px 8px 8px 2px;
-      content: "";
-    }
-    .brand-mark::before { top: 2px; left: 0; background: #fff; }
-    .brand-mark::after { right: 0; bottom: 2px; background: #b99aef; }
-    .hero-title {
-      position: relative;
-      z-index: 1;
-      margin: 58px 0 32px;
-      font-size: clamp(27px, 2.8vw, 38px);
-      font-weight: 650;
-      line-height: 1.45;
-      letter-spacing: -1.7px;
-      word-break: keep-all;
-    }
-    .hero-title span { color: #d1b9fb; }
-    .product-preview {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      margin: 0;
-      padding: 0 18px 22px 0;
-    }
-    .chat-preview {
-      padding: 21px 22px 94px;
-      border: 1px solid #ffffff32;
-      border-radius: 19px;
-      background: #ffffff0d;
-      box-shadow: 0 14px 35px #10031b12;
-    }
-    .chat-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 17px;
-      border-bottom: 1px solid #ffffff18;
-      font-size: 13px;
-      font-weight: 650;
-    }
-    .chat-members { color: #d2c3e1; font-size: 11px; font-weight: 400; }
-    .message { display: flex; align-items: flex-start; gap: 9px; margin-top: 20px; }
-    .avatar {
-      display: grid;
-      flex: 0 0 27px;
-      height: 27px;
-      place-items: center;
-      border: 1px solid #ffffff30;
-      border-radius: 9px;
-      color: #eee5fa;
-      background: #ffffff0e;
-      font-size: 11px;
-      font-weight: 650;
-    }
-    .message-content { min-width: 0; }
-    .message-name { margin-bottom: 7px; color: #ddcee9; font-size: 10px; }
-    .bubble {
-      padding: 12px 14px;
-      border-radius: 0 12px 12px;
-      color: #30233f;
-      background: #f5effc;
-      font-size: 12px;
-      line-height: 1.65;
-      word-break: keep-all;
-    }
-    .message.outgoing { justify-content: flex-end; margin-top: 17px; padding-left: 32px; }
-    .outgoing .message-name { text-align: right; }
-    .outgoing .bubble { border-radius: 12px 0 12px 12px; background: #d7c1fa; }
-    .translation { display: block; margin-top: 4px; color: #756485; font-size: 10px; }
-    .intent-label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 8px;
-      color: #e3d1ff;
-      font-size: 10px;
-    }
-    .intent-label svg { flex: 0 0 12px; }
-    .receipt-preview {
-      position: relative;
-      width: 85%;
-      margin: -69px -18px 0 auto;
-      padding: 18px 20px;
-      border: 1px solid #e8e0f3;
-      border-radius: 15px;
-      color: #362b43;
-      background: #fff;
-      box-shadow: 0 18px 35px #14052430;
-    }
-    .receipt-heading { display: flex; align-items: center; gap: 7px; margin-bottom: 13px; font-size: 12px; font-weight: 750; }
-    .receipt-heading svg { color: var(--purple); }
-    .receipt-heading .confirmed { margin-left: auto; color: #6c489e; font-size: 10px; font-weight: 500; }
-    .receipt-row { display: flex; justify-content: space-between; gap: 12px; margin: 10px 0; font-size: 11px; }
-    .receipt-row dt { color: #8a8293; }
-    .receipt-row dd { margin: 0; text-align: right; font-weight: 550; }
-    .receipt-people {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 13px;
-      padding-top: 12px;
-      border-top: 1px solid #eee9f4;
-      color: #725394;
-      font-size: 10px;
-    }
-    .receipt-people span { display: inline-flex; align-items: center; gap: 4px; }
-    .preview-caption { margin: 5px 0 0; color: #c9b5dd; font-size: 11px; line-height: 1.6; }
+      .brand-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 44px 48px 40px;
+        color: #fff;
+        background:
+          radial-gradient(ellipse at 95% 100%, #65419a 0, transparent 65%),
+          linear-gradient(145deg, #251437, #3c2259);
+      }
+      .brand-panel::after {
+        position: absolute;
+        right: -160px;
+        bottom: -180px;
+        width: 500px;
+        height: 500px;
+        border: 1px solid #ffffff10;
+        border-radius: 50%;
+        content: "";
+        pointer-events: none;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        width: fit-content;
+        font-size: 24px;
+        font-weight: 750;
+        letter-spacing: 1.6px;
+      }
+      .brand-mark {
+        position: relative;
+        display: block;
+        width: 34px;
+        height: 34px;
+      }
+      .brand-mark::before,
+      .brand-mark::after {
+        position: absolute;
+        width: 23px;
+        height: 21px;
+        border-radius: 8px 8px 8px 2px;
+        content: "";
+      }
+      .brand-mark::before {
+        top: 2px;
+        left: 0;
+        background: #fff;
+      }
+      .brand-mark::after {
+        right: 0;
+        bottom: 2px;
+        background: #b99aef;
+      }
+      .hero-title {
+        position: relative;
+        z-index: 1;
+        margin: 58px 0 32px;
+        font-size: clamp(27px, 2.8vw, 38px);
+        font-weight: 650;
+        line-height: 1.45;
+        letter-spacing: -1.7px;
+        word-break: keep-all;
+      }
+      .hero-title span {
+        color: #d1b9fb;
+      }
+      .product-preview {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        margin: 0;
+        padding: 0 18px 22px 0;
+      }
+      .chat-preview {
+        padding: 21px 22px 94px;
+        border: 1px solid #ffffff32;
+        border-radius: 19px;
+        background: #ffffff0d;
+        box-shadow: 0 14px 35px #10031b12;
+      }
+      .chat-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 17px;
+        border-bottom: 1px solid #ffffff18;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .chat-members {
+        color: #d2c3e1;
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .message {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-top: 20px;
+      }
+      .avatar {
+        display: grid;
+        flex: 0 0 27px;
+        height: 27px;
+        place-items: center;
+        border: 1px solid #ffffff30;
+        border-radius: 9px;
+        color: #eee5fa;
+        background: #ffffff0e;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .message-content {
+        min-width: 0;
+      }
+      .message-name {
+        margin-bottom: 7px;
+        color: #ddcee9;
+        font-size: 10px;
+      }
+      .bubble {
+        padding: 12px 14px;
+        border-radius: 0 12px 12px;
+        color: #30233f;
+        background: #f5effc;
+        font-size: 12px;
+        line-height: 1.65;
+        word-break: keep-all;
+      }
+      .message.outgoing {
+        justify-content: flex-end;
+        margin-top: 17px;
+        padding-left: 32px;
+      }
+      .outgoing .message-name {
+        text-align: right;
+      }
+      .outgoing .bubble {
+        border-radius: 12px 0 12px 12px;
+        background: #d7c1fa;
+      }
+      .translation {
+        display: block;
+        margin-top: 4px;
+        color: #756485;
+        font-size: 10px;
+      }
+      .intent-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 8px;
+        color: #e3d1ff;
+        font-size: 10px;
+      }
+      .intent-label svg {
+        flex: 0 0 12px;
+      }
+      .receipt-preview {
+        position: relative;
+        width: 85%;
+        margin: -69px -18px 0 auto;
+        padding: 18px 20px;
+        border: 1px solid #e8e0f3;
+        border-radius: 15px;
+        color: #362b43;
+        background: #fff;
+        box-shadow: 0 18px 35px #14052430;
+      }
+      .receipt-heading {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 13px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+      .receipt-heading svg {
+        color: var(--purple);
+      }
+      .receipt-heading .confirmed {
+        margin-left: auto;
+        color: #6c489e;
+        font-size: 10px;
+        font-weight: 500;
+      }
+      .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 10px 0;
+        font-size: 11px;
+      }
+      .receipt-row dt {
+        color: #8a8293;
+      }
+      .receipt-row dd {
+        margin: 0;
+        text-align: right;
+        font-weight: 550;
+      }
+      .receipt-people {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 13px;
+        padding-top: 12px;
+        border-top: 1px solid #eee9f4;
+        color: #725394;
+        font-size: 10px;
+      }
+      .receipt-people span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .preview-caption {
+        margin: 5px 0 0;
+        color: #c9b5dd;
+        font-size: 11px;
+        line-height: 1.6;
+      }
 
-    .login-panel { display: flex; flex-direction: column; min-width: 0; padding: 35px 42px 28px; }
-    .panel-top { display: flex; justify-content: flex-end; }
-    .language-switch { display: inline-flex; gap: 3px; padding: 4px; border: 1px solid #eae6f1; border-radius: 10px; background: #f7f5fa; }
-    .language-button { min-width: 46px; padding: 7px 10px; border: 0; border-radius: 7px; color: #817989; background: transparent; font-size: 11px; font-weight: 650; }
-    .language-button[aria-pressed="true"] { color: #6138b1; background: #fff; box-shadow: 0 1px 5px #2c173b12; }
-    .login-content { width: min(360px, 100%); margin: auto; padding: 45px 0 40px; }
-    .mobile-brand { display: none; color: #432b60; }
-    .login-heading { margin: 0 0 11px; font-size: 32px; font-weight: 750; letter-spacing: -1.2px; }
-    .login-description { margin: 0 0 35px; color: var(--muted); font-size: 14px; line-height: 1.65; word-break: keep-all; }
-    .field { margin-bottom: 21px; }
-    .field-label { display: block; margin-bottom: 9px; color: #403b4b; font-size: 13px; font-weight: 650; }
-    .input-wrap { position: relative; }
-    .text-input {
-      width: 100%;
-      height: 53px;
-      padding: 0 15px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: #2e2939;
-      background: #fff;
-      font-size: 14px;
-      transition: border-color 150ms, box-shadow 150ms;
-    }
-    .text-input::placeholder { color: #aaa4b2; }
-    .text-input:focus { outline: none; border-color: var(--purple); box-shadow: 0 0 0 3px #7041d912; }
-    .text-input[aria-invalid="true"] { border-color: #c8485d; }
-    #password { padding-right: 55px; }
-    .password-toggle { position: absolute; top: 5px; right: 5px; display: grid; width: 43px; height: 43px; place-items: center; border: 0; border-radius: 7px; color: #8b8297; background: transparent; }
-    .password-toggle:hover { color: var(--purple); background: #f6f2fc; }
-    .password-toggle [data-eye="hidden"] { display: none; }
-    .password-toggle[aria-pressed="true"] [data-eye="visible"] { display: none; }
-    .password-toggle[aria-pressed="true"] [data-eye="hidden"] { display: block; }
-    .field-error { margin: 8px 0 0; color: #b72d45; font-size: 12px; line-height: 1.5; }
-    [hidden] { display: none !important; }
-    .remember-label { display: inline-flex; align-items: center; gap: 8px; margin: 1px 0 27px; color: #777080; font-size: 12px; cursor: pointer; }
-    .remember-label input { width: 16px; height: 16px; margin: 0; accent-color: var(--purple); cursor: pointer; }
-    .submit-button { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 53px; padding: 14px 20px; border: 1px solid transparent; border-radius: 10px; color: #fff; background: var(--purple); font-size: 14px; font-weight: 650; box-shadow: 0 5px 12px #7041d921; transition: background 150ms, transform 150ms; }
-    .submit-button:hover { background: var(--purple-dark); transform: translateY(-1px); }
-    .submit-button:active { transform: translateY(0); }
-    .form-status { margin: 17px 0 0; padding: 12px 14px; border: 1px solid #e4d8fa; border-radius: 9px; color: #63478e; background: #f8f4ff; font-size: 12px; line-height: 1.7; word-break: keep-all; }
-    .form-caption { margin: 20px 0 0; color: #918997; font-size: 11px; line-height: 1.7; text-align: center; }
-    .panel-footer { margin-top: auto; color: #a39ba9; font-size: 10px; text-align: center; letter-spacing: 0.2px; }
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      .login-panel {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 35px 42px 28px;
+      }
+      .panel-top {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .language-switch {
+        display: inline-flex;
+        gap: 3px;
+        padding: 4px;
+        border: 1px solid #eae6f1;
+        border-radius: 10px;
+        background: #f7f5fa;
+      }
+      .language-button {
+        min-width: 46px;
+        padding: 7px 10px;
+        border: 0;
+        border-radius: 7px;
+        color: #817989;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .language-button[aria-pressed="true"] {
+        color: #6138b1;
+        background: #fff;
+        box-shadow: 0 1px 5px #2c173b12;
+      }
+      .login-content {
+        width: min(360px, 100%);
+        margin: auto;
+        padding: 45px 0 40px;
+      }
+      .mobile-brand {
+        display: none;
+        color: #432b60;
+      }
+      .login-heading {
+        margin: 0 0 11px;
+        font-size: 32px;
+        font-weight: 750;
+        letter-spacing: -1.2px;
+      }
+      .login-description {
+        margin: 0 0 35px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+        word-break: keep-all;
+      }
+      .field {
+        margin-bottom: 21px;
+      }
+      .field-label {
+        display: block;
+        margin-bottom: 9px;
+        color: #403b4b;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .input-wrap {
+        position: relative;
+      }
+      .text-input {
+        width: 100%;
+        height: 53px;
+        padding: 0 15px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: #2e2939;
+        background: #fff;
+        font-size: 14px;
+        transition:
+          border-color 150ms,
+          box-shadow 150ms;
+      }
+      .text-input::placeholder {
+        color: #aaa4b2;
+      }
+      .text-input:focus {
+        outline: none;
+        border-color: var(--purple);
+        box-shadow: 0 0 0 3px #7041d912;
+      }
+      .text-input[aria-invalid="true"] {
+        border-color: #c8485d;
+      }
+      #password {
+        padding-right: 55px;
+      }
+      .password-toggle {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: grid;
+        width: 43px;
+        height: 43px;
+        place-items: center;
+        border: 0;
+        border-radius: 7px;
+        color: #8b8297;
+        background: transparent;
+      }
+      .password-toggle:hover {
+        color: var(--purple);
+        background: #f6f2fc;
+      }
+      .password-toggle [data-eye="hidden"] {
+        display: none;
+      }
+      .password-toggle[aria-pressed="true"] [data-eye="visible"] {
+        display: none;
+      }
+      .password-toggle[aria-pressed="true"] [data-eye="hidden"] {
+        display: block;
+      }
+      .field-error {
+        margin: 8px 0 0;
+        color: #b72d45;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .remember-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 1px 0 27px;
+        color: #777080;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .remember-label input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--purple);
+        cursor: pointer;
+      }
+      .submit-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 53px;
+        padding: 14px 20px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--purple);
+        font-size: 14px;
+        font-weight: 650;
+        box-shadow: 0 5px 12px #7041d921;
+        transition:
+          background 150ms,
+          transform 150ms;
+      }
+      .submit-button:hover {
+        background: var(--purple-dark);
+        transform: translateY(-1px);
+      }
+      .submit-button:active {
+        transform: translateY(0);
+      }
+      .form-status {
+        margin: 17px 0 0;
+        padding: 12px 14px;
+        border: 1px solid #e4d8fa;
+        border-radius: 9px;
+        color: #63478e;
+        background: #f8f4ff;
+        font-size: 12px;
+        line-height: 1.7;
+        word-break: keep-all;
+      }
+      .form-caption {
+        margin: 20px 0 0;
+        color: #918997;
+        font-size: 11px;
+        line-height: 1.7;
+        text-align: center;
+      }
+      .panel-footer {
+        margin-top: auto;
+        color: #a39ba9;
+        font-size: 10px;
+        text-align: center;
+        letter-spacing: 0.2px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
 
-    @media (min-width: 1500px) { body { padding-top: max(32px, calc((100svh - 820px) / 2)); } }
-    @media (max-width: 1100px) {
-      body { padding: 24px; }
-      .auth-shell { min-height: calc(100svh - 48px); }
-      .brand-panel { padding: 35px 30px; }
-      .hero-title { margin-top: 50px; font-size: 30px; }
-      .login-panel { padding: 28px 32px; }
-      .chat-preview { padding-right: 16px; padding-left: 16px; }
-    }
-    @media (max-width: 760px) {
-      body { padding: 0; background: #fff; }
-      .auth-shell { display: block; width: 100%; min-height: 100svh; border: 0; border-radius: 0; box-shadow: none; }
-      .brand-panel { display: none; }
-      .login-panel { min-height: 100svh; padding: 24px; }
-      .login-content { padding: 36px 0 55px; }
-      .mobile-brand { display: inline-flex; margin-bottom: 42px; }
-      .mobile-brand .brand-mark::before { background: var(--purple); }
-      .mobile-brand .brand-mark::after { background: #c3a6ef; }
-      .login-heading { font-size: 30px; }
-      .login-description { margin-bottom: 30px; }
-      .text-input { font-size: 16px; }
-      .panel-footer { padding-bottom: 6px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition: none !important; }
-    }
-  </style>
-<link rel="stylesheet" href="./css/tokens.css"><link rel="stylesheet" href="./css/brand.css"><link rel="stylesheet" href="./css/login-theme.css"><link rel="icon" type="image/png" href="./assets/brand/icon.png"></head>
-<body>
-  <main class="auth-shell">
-    <section class="brand-panel" aria-label="눈치챗">
-      <div class="brand"><span class="brand-logo"><img src="./assets/brand/logo-light.png" alt="눈치Chat"></span></div>
-      <h2 class="hero-title" data-i18n="heroTitle">각자의 언어로 대화하고<br><span>팀의 약속을 확인하세요.</span></h2>
+      @media (min-width: 1500px) {
+        body {
+          padding-top: max(32px, calc((100svh - 820px) / 2));
+        }
+      }
+      @media (max-width: 1100px) {
+        body {
+          padding: 24px;
+        }
+        .auth-shell {
+          min-height: calc(100svh - 48px);
+        }
+        .brand-panel {
+          padding: 35px 30px;
+        }
+        .hero-title {
+          margin-top: 50px;
+          font-size: 30px;
+        }
+        .login-panel {
+          padding: 28px 32px;
+        }
+        .chat-preview {
+          padding-right: 16px;
+          padding-left: 16px;
+        }
+      }
+      @media (max-width: 760px) {
+        body {
+          padding: 0;
+          background: #fff;
+        }
+        .auth-shell {
+          display: block;
+          width: 100%;
+          min-height: 100svh;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+        .brand-panel {
+          display: none;
+        }
+        .login-panel {
+          min-height: 100svh;
+          padding: 24px;
+        }
+        .login-content {
+          padding: 36px 0 55px;
+        }
+        .mobile-brand {
+          display: inline-flex;
+          margin-bottom: 42px;
+        }
+        .mobile-brand .brand-mark::before {
+          background: var(--purple);
+        }
+        .mobile-brand .brand-mark::after {
+          background: #c3a6ef;
+        }
+        .login-heading {
+          font-size: 30px;
+        }
+        .login-description {
+          margin-bottom: 30px;
+        }
+        .text-input {
+          font-size: 16px;
+        }
+        .panel-footer {
+          padding-bottom: 6px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition: none !important;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="./css/tokens.css" />
+    <link rel="stylesheet" href="./css/brand.css" />
+    <link rel="stylesheet" href="./css/login-theme.css" />
+    <link rel="icon" type="image/png" href="./assets/brand/icon.png" />
+    <link rel="stylesheet" href="./css/i18n.css" />
+  </head>
+  <body data-page="login">
+    <main class="auth-shell">
+      <section class="brand-panel" aria-label="눈치챗">
+        <div class="brand">
+          <span class="brand-logo"><img src="./assets/brand/logo-light.png" alt="눈치Chat" /></span>
+        </div>
+        <h2 class="hero-title">
+          <span data-i18n="heroFirst"></span><br /><span data-i18n="heroSecond"></span>
+        </h2>
 
-      <figure class="product-preview">
-        <figcaption class="sr-only" data-i18n="previewLabel">다국어 채팅과 합의영수증 화면 예시</figcaption>
-        <div class="chat-preview">
-          <div class="chat-heading">
-            <span data-i18n="teamName">팀플 3조</span>
-            <span class="chat-members">Minsu · Emma</span>
-          </div>
-          <div class="message">
-            <div class="avatar" aria-hidden="true">E</div>
-            <div class="message-content">
-              <div class="message-name">Emma</div>
-              <div class="bubble">
-                <span data-i18n="firstMessage">금요일 오후 6시까지 자료조사 초안 부탁해요.</span>
-                <span class="translation" data-i18n="firstTranslation" lang="en">Please send the research draft by Friday at 6 PM KST.</span>
+        <figure class="product-preview">
+          <figcaption class="sr-only" data-i18n="previewLabel">
+            <span data-i18n="previewLabel">다국어 채팅과 합의영수증 화면 예시</span>
+          </figcaption>
+          <div class="chat-preview">
+            <div class="chat-heading">
+              <span data-i18n="teamName"><span data-i18n="teamName">팀플 3조</span></span>
+              <span class="chat-members">Minsu · Emma</span>
+            </div>
+            <div class="message">
+              <div class="avatar" aria-hidden="true">E</div>
+              <div class="message-content">
+                <div class="message-name">Emma</div>
+                <div class="bubble">
+                  <span data-i18n="firstMessage"
+                    ><span data-i18n="firstMessage"
+                      >금요일 오후 6시까지 자료조사 초안 부탁해요.</span
+                    ></span
+                  >
+                  <span class="translation" data-i18n="firstTranslation" lang="en"
+                    ><span data-i18n="firstTranslation"
+                      >Please send the research draft by Friday at 6 PM KST.</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="message outgoing">
+              <div class="message-content">
+                <div class="message-name">Minsu</div>
+                <div class="bubble">
+                  <span data-i18n="secondMessage"
+                    ><span data-i18n="secondMessage">네, 제가 정리해서 보낼게요.</span></span
+                  >
+                  <span class="translation" data-i18n="secondTranslation" lang="en"
+                    ><span data-i18n="secondTranslation"
+                      >Yes, I'll put it together and send it.</span
+                    ></span
+                  >
+                </div>
+                <div class="intent-label">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                    <path
+                      d="m8 12 3 3 5-6"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></path>
+                  </svg>
+                  <span data-i18n="senderIntent"
+                    ><span data-i18n="senderIntent">발신자가 확인한 뜻 · 수락</span></span
+                  >
+                </div>
               </div>
             </div>
           </div>
-          <div class="message outgoing">
-            <div class="message-content">
-              <div class="message-name">Minsu</div>
-              <div class="bubble">
-                <span data-i18n="secondMessage">네, 제가 정리해서 보낼게요.</span>
-                <span class="translation" data-i18n="secondTranslation" lang="en">Yes, I'll put it together and send it.</span>
+
+          <div class="receipt-preview">
+            <div class="receipt-heading">
+              <svg width="15" height="17" viewBox="0 0 20 22" fill="none" aria-hidden="true">
+                <path
+                  d="M4 2h12a1 1 0 0 1 1 1v17l-3-2-4 2-4-2-3 2V3a1 1 0 0 1 1-1Z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                ></path>
+                <path
+                  d="M7 7h6M7 11h6"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                ></path>
+              </svg>
+              <span data-i18n="receiptTitle"><span data-i18n="receiptTitle">합의영수증</span></span>
+              <span class="confirmed" data-i18n="confirmed"
+                ><span data-i18n="confirmed">모두 확인했어요</span></span
+              >
+            </div>
+            <dl>
+              <div class="receipt-row">
+                <dt data-i18n="who"><span data-i18n="who">누가</span></dt>
+                <dd>Minsu</dd>
               </div>
-              <div class="intent-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle><path d="m8 12 3 3 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                <span data-i18n="senderIntent">발신자가 확인한 뜻 · 수락</span>
+              <div class="receipt-row">
+                <dt data-i18n="what"><span data-i18n="what">무엇을</span></dt>
+                <dd data-i18n="task"><span data-i18n="task">자료조사 초안 정리</span></dd>
               </div>
+              <div class="receipt-row">
+                <dt data-i18n="when"><span data-i18n="when">언제까지</span></dt>
+                <dd data-i18n="deadline">
+                  <span data-i18n="deadline">11월 20일 (금) 18:00 KST</span>
+                </dd>
+              </div>
+            </dl>
+            <div class="receipt-people">
+              <span><span aria-hidden="true">✓</span> Minsu</span>
+              <span><span aria-hidden="true">✓</span> Emma</span>
             </div>
           </div>
+        </figure>
+        <p class="preview-caption" data-i18n="previewCaption">
+          <span data-i18n="previewCaption">의도를 확인한 메시지와 함께 결정사항을 정리해요.</span>
+        </p>
+      </section>
+
+      <section class="login-panel" aria-labelledby="login-heading">
+        <div class="panel-top">
+          <div class="language-switch" role="group" aria-label="화면 언어 / Interface language">
+            <button
+              class="language-button"
+              type="button"
+              data-language="ko"
+              aria-pressed="true"
+              aria-label="한국어"
+            >
+              KO
+            </button>
+            <button
+              class="language-button"
+              type="button"
+              data-language="en"
+              aria-pressed="false"
+              aria-label="English"
+            >
+              EN</button
+            ><button class="language-button" type="button" data-language="vi">VI</button
+            ><button class="language-button" type="button" data-language="de">DE</button>
+          </div>
         </div>
 
-        <div class="receipt-preview">
-          <div class="receipt-heading">
-            <svg width="15" height="17" viewBox="0 0 20 22" fill="none" aria-hidden="true"><path d="M4 2h12a1 1 0 0 1 1 1v17l-3-2-4 2-4-2-3 2V3a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 7h6M7 11h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
-            <span data-i18n="receiptTitle">합의영수증</span>
-            <span class="confirmed" data-i18n="confirmed">모두 확인했어요</span>
+        <div class="login-content">
+          <div class="brand mobile-brand">
+            <span class="brand-logo"
+              ><img src="./assets/brand/logo-light.png" alt="눈치Chat"
+            /></span>
           </div>
-          <dl>
-            <div class="receipt-row"><dt data-i18n="who">누가</dt><dd>Minsu</dd></div>
-            <div class="receipt-row"><dt data-i18n="what">무엇을</dt><dd data-i18n="task">자료조사 초안 정리</dd></div>
-            <div class="receipt-row"><dt data-i18n="when">언제까지</dt><dd data-i18n="deadline">11월 20일 (금) 18:00 KST</dd></div>
-          </dl>
-          <div class="receipt-people">
-            <span><span aria-hidden="true">✓</span> Minsu</span>
-            <span><span aria-hidden="true">✓</span> Emma</span>
-          </div>
-        </div>
-      </figure>
-      <p class="preview-caption" data-i18n="previewCaption">의도를 확인한 메시지와 함께 결정사항을 정리해요.</p>
-    </section>
-
-    <section class="login-panel" aria-labelledby="login-heading">
-      <div class="panel-top">
-        <div class="language-switch" role="group" aria-label="화면 언어 / Interface language">
-          <button class="language-button" type="button" data-language="ko" aria-pressed="true" aria-label="한국어">KO</button>
-          <button class="language-button" type="button" data-language="en" aria-pressed="false" aria-label="English">EN</button>
-        </div>
-      </div>
-
-      <div class="login-content">
-        <div class="brand mobile-brand"><span class="brand-logo"><img src="./assets/brand/logo-light.png" alt="눈치Chat"></span></div>
-        <h1 class="login-heading" id="login-heading" data-i18n="loginTitle">로그인</h1>
-        <p class="login-description" data-i18n="loginDescription">팀의 대화와 약속을 이어가세요.</p>
-
-        <form id="login-form" novalidate="">
-          <div class="field">
-            <label class="field-label" for="email" data-i18n="emailLabel">이메일</label>
-            <input class="text-input" id="email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@example.com" aria-describedby="email-error" required="">
-            <p class="field-error" id="email-error" hidden=""></p>
-          </div>
-
-          <div class="field">
-            <label class="field-label" for="password" data-i18n="passwordLabel">비밀번호</label>
-            <div class="input-wrap">
-              <input class="text-input" id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호를 입력해 주세요" data-placeholder="passwordPlaceholder" aria-describedby="password-error" required="">
-              <button class="password-toggle" id="password-toggle" type="button" aria-label="비밀번호 표시" aria-pressed="false" aria-controls="password">
-                <svg data-eye="visible" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"></circle></svg>
-                <svg data-eye="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M9.8 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.3 4.2M6.3 6.5A19 19 0 0 0 2 12s3.5 7 10 7a11 11 0 0 0 5-1.2M10 10a3 3 0 0 0 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              </button>
-            </div>
-            <p class="field-error" id="password-error" hidden=""></p>
-          </div>
-
-          <label class="remember-label" for="remember-email">
-            <input id="remember-email" name="rememberEmail" type="checkbox">
-            <span data-i18n="rememberEmail">이메일 기억하기</span>
-          </label>
-
-          <button class="submit-button" type="submit">
+          <h1 class="login-heading" id="login-heading" data-i18n="loginTitle">
             <span data-i18n="loginButton">로그인</span>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </h1>
+          <p class="login-description" data-i18n="loginDescription">
+            <span data-i18n="loginDescription">팀의 대화와 약속을 이어가세요.</span>
+          </p>
+
+          <form id="login-form" novalidate="">
+            <div class="field">
+              <label class="field-label" for="email" data-i18n="emailLabel"
+                ><span data-i18n="emailLabel">이메일</span></label
+              >
+              <input
+                class="text-input"
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="username"
+                inputmode="email"
+                autocapitalize="none"
+                spellcheck="false"
+                placeholder="you@example.com"
+                aria-describedby="email-error"
+                required=""
+              />
+              <p class="field-error" id="email-error" hidden=""></p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="password" data-i18n="passwordLabel"
+                ><span data-i18n="passwordLabel">비밀번호</span></label
+              >
+              <div class="input-wrap">
+                <input
+                  class="text-input"
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="비밀번호를 입력해 주세요"
+                  data-i18n-placeholder="passwordPlaceholder"
+                  data-i18n-placeholder="passwordPlaceholder"
+                  aria-describedby="password-error"
+                  required=""
+                />
+                <button
+                  class="password-toggle"
+                  id="password-toggle"
+                  type="button"
+                  aria-label="비밀번호 표시"
+                  data-i18n-aria-label="showPassword"
+                  aria-pressed="false"
+                  aria-controls="password"
+                >
+                  <svg
+                    data-eye="visible"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linejoin="round"
+                    ></path>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"></circle>
+                  </svg>
+                  <svg
+                    data-eye="hidden"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="m3 3 18 18M9.8 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a18 18 0 0 1-3.3 4.2M6.3 6.5A19 19 0 0 0 2 12s3.5 7 10 7a11 11 0 0 0 5-1.2M10 10a3 3 0 0 0 4 4"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+              <p class="field-error" id="password-error" hidden=""></p>
+            </div>
+
+            <label class="remember-label" for="remember-email">
+              <input id="remember-email" name="rememberEmail" type="checkbox" />
+              <span data-i18n="rememberEmail"
+                ><span data-i18n="rememberEmail">이메일 기억하기</span></span
+              >
+            </label>
+
+            <button class="submit-button" type="submit">
+              <span data-i18n="loginButton"><span data-i18n="loginButton">로그인</span></span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M5 12h14m-6-6 6 6-6 6"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+              </svg>
+            </button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite" hidden=""></p>
+          </form>
+          <button type="button" class="signup-open" id="open-signup" data-i18n="signup">
+            <span data-i18n="signup">회원가입</span>
           </button>
-          <p class="form-status" id="form-status" role="status" aria-live="polite" hidden=""></p>
-        </form>
-        <p class="form-caption" data-i18n="formCaption">이메일과 비밀번호를 입력하면 테스트 페이지로 이동합니다.</p>
+          <p class="form-caption" data-i18n="formCaption">
+            <span data-i18n="formCaption"
+              >이메일과 비밀번호를 입력하면 테스트 페이지로 이동합니다.</span
+            >
+          </p>
+        </div>
+
+        <footer class="panel-footer">© 눈치챗</footer>
+      </section>
+    </main>
+
+    <dialog id="signup-dialog" aria-labelledby="signup-title">
+      <div class="signup-heading">
+        <h2 id="signup-title" data-i18n="signupTitle"></h2>
+        <button type="button" id="close-signup" data-i18n-aria-label="close">✕</button>
       </div>
-
-      <footer class="panel-footer">© 눈치챗</footer>
-    </section>
-  </main>
-
-  <script>
-    const translations = {
-      ko: {
-        pageTitle: "눈치챗 · 로그인",
-        heroTitle: "각자의 언어로 대화하고<br><span>팀의 약속을 확인하세요.</span>",
-        previewLabel: "다국어 채팅과 합의영수증 화면 예시",
-        teamName: "팀플 3조",
-        firstMessage: "금요일 오후 6시까지 자료조사 초안 부탁해요.",
-        firstTranslation: "Please send the research draft by Friday at 6 PM KST.",
-        secondMessage: "네, 제가 정리해서 보낼게요.",
-        secondTranslation: "Yes, I'll put it together and send it.",
-        senderIntent: "발신자가 확인한 뜻 · 수락",
-        receiptTitle: "합의영수증",
-        confirmed: "모두 확인했어요",
-        who: "누가",
-        what: "무엇을",
-        when: "언제까지",
-        task: "자료조사 초안 정리",
-        deadline: "11월 20일 (금) 18:00 KST",
-        previewCaption: "의도를 확인한 메시지와 함께 결정사항을 정리해요.",
-        loginTitle: "로그인",
-        loginDescription: "팀의 대화와 약속을 이어가세요.",
-        emailLabel: "이메일",
-        passwordLabel: "비밀번호",
-        passwordPlaceholder: "비밀번호를 입력해 주세요",
-        rememberEmail: "이메일 기억하기",
-        loginButton: "로그인",
-        showPassword: "비밀번호 표시",
-        hidePassword: "비밀번호 숨기기",
-        emailRequired: "이메일을 입력해 주세요.",
-        emailInvalid: "올바른 이메일 주소를 입력해 주세요.",
-        passwordRequired: "비밀번호를 입력해 주세요.",
-        previewMessage: "입력 형식이 확인됐어요. 실제 로그인은 인증 서버를 연결한 뒤 사용할 수 있어요.",
-        formCaption: "이메일과 비밀번호를 입력하면 테스트 페이지로 이동합니다."
-      },
-      en: {
-        pageTitle: "눈치챗 · Log in",
-        heroTitle: "Chat in your language.<br><span>Confirm your team's plans.</span>",
-        previewLabel: "Example of multilingual chat and an agreement receipt",
-        teamName: "Project team 3",
-        firstMessage: "Please send the research draft by Friday at 6 PM KST.",
-        firstTranslation: "금요일 오후 6시까지 자료조사 초안 부탁해요.",
-        secondMessage: "Yes, I'll put it together and send it.",
-        secondTranslation: "네, 제가 정리해서 보낼게요.",
-        senderIntent: "Sender-confirmed intent · Accepted",
-        receiptTitle: "Agreement receipt",
-        confirmed: "Confirmed by all",
-        who: "Who",
-        what: "What",
-        when: "Due",
-        task: "Prepare the research draft",
-        deadline: "Fri, Nov 20 · 6:00 PM KST",
-        previewCaption: "Review decisions alongside the sender's confirmed intent.",
-        loginTitle: "Log in",
-        loginDescription: "Pick up your team's conversations and plans.",
-        emailLabel: "Email",
-        passwordLabel: "Password",
-        passwordPlaceholder: "Enter your password",
-        rememberEmail: "Remember my email",
-        loginButton: "Log in",
-        showPassword: "Show password",
-        hidePassword: "Hide password",
-        emailRequired: "Enter your email address.",
-        emailInvalid: "Enter a valid email address.",
-        passwordRequired: "Enter your password.",
-        previewMessage: "Your input format looks good. Connect an authentication server to enable account login.",
-        formCaption: "Enter your email and password to open the test page."
-      }
-    };
-
-    const form = document.getElementById("login-form");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const passwordToggle = document.getElementById("password-toggle");
-    const rememberEmail = document.getElementById("remember-email");
-    const formStatus = document.getElementById("form-status");
-    const savedEmailKey = "bora.rememberedEmail";
-    let currentLanguage = "ko";
-
-    function setFieldError(input, messageKey) {
-      const error = document.getElementById(input.id + "-error");
-      error.dataset.messageKey = messageKey;
-      error.textContent = messageKey ? translations[currentLanguage][messageKey] : "";
-      error.hidden = !messageKey;
-      input.setAttribute("aria-invalid", String(Boolean(messageKey)));
-    }
-
-    function validateEmail() {
-      let messageKey = "";
-      if (!emailInput.value.trim()) {
-        messageKey = "emailRequired";
-      } else if (emailInput.validity.typeMismatch) {
-        messageKey = "emailInvalid";
-      }
-      setFieldError(emailInput, messageKey);
-      return !messageKey;
-    }
-
-    function validatePassword() {
-      const messageKey = passwordInput.value.length ? "" : "passwordRequired";
-      setFieldError(passwordInput, messageKey);
-      return !messageKey;
-    }
-
-    function updatePasswordLabel() {
-      const key = passwordInput.type === "password" ? "showPassword" : "hidePassword";
-      passwordToggle.setAttribute("aria-label", translations[currentLanguage][key]);
-    }
-
-    function setLanguage(language) {
-      currentLanguage = language;
-      document.documentElement.lang = language;
-      document.title = translations[language].pageTitle;
-      document.querySelectorAll("[data-i18n]").forEach((element) => {
-        const key = element.dataset.i18n;
-        if (key === "heroTitle") {
-          // 이 HTML은 위에 정의한 고정 번역문에서만 가져옵니다.
-          element.innerHTML = translations[language][key];
-        } else {
-          element.textContent = translations[language][key];
-        }
-      });
-      document.querySelectorAll("[data-placeholder]").forEach((element) => {
-        element.placeholder = translations[language][element.dataset.placeholder];
-      });
-      document.querySelectorAll("[data-language]").forEach((button) => {
-        button.setAttribute("aria-pressed", String(button.dataset.language === language));
-      });
-      document.querySelectorAll(".translation").forEach((element) => {
-        element.lang = language === "ko" ? "en" : "ko";
-      });
-      document.querySelectorAll(".field-error").forEach((element) => {
-        if (element.dataset.messageKey) {
-          element.textContent = translations[language][element.dataset.messageKey];
-        }
-      });
-      if (!formStatus.hidden) {
-        formStatus.textContent = translations[language].previewMessage;
-      }
-      updatePasswordLabel();
-    }
-
-    document.querySelectorAll("[data-language]").forEach((button) => {
-      button.addEventListener("click", () => setLanguage(button.dataset.language));
-    });
-
-    passwordToggle.addEventListener("click", () => {
-      const showPassword = passwordInput.type === "password";
-      passwordInput.type = showPassword ? "text" : "password";
-      passwordToggle.setAttribute("aria-pressed", String(showPassword));
-      updatePasswordLabel();
-    });
-
-    emailInput.addEventListener("input", () => {
-      formStatus.hidden = true;
-      if (emailInput.getAttribute("aria-invalid") === "true") validateEmail();
-    });
-    passwordInput.addEventListener("input", () => {
-      formStatus.hidden = true;
-      if (passwordInput.getAttribute("aria-invalid") === "true") validatePassword();
-    });
-
-    try {
-      const savedEmail = localStorage.getItem(savedEmailKey);
-      if (savedEmail) {
-        emailInput.value = savedEmail;
-        rememberEmail.checked = true;
-      }
-    } catch {
-      // 저장소 사용이 제한된 브라우저에서도 입력 기능은 사용할 수 있습니다.
-    }
-
-    rememberEmail.addEventListener("change", () => {
-      if (!rememberEmail.checked) {
-        try { localStorage.removeItem(savedEmailKey); } catch {}
-      }
-    });
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      formStatus.hidden = true;
-      emailInput.value = emailInput.value.trim();
-      const emailValid = validateEmail();
-      const passwordValid = validatePassword();
-      if (!emailValid || !passwordValid) {
-        (emailValid ? passwordInput : emailInput).focus();
-        return;
-      }
-
-      try {
-        if (rememberEmail.checked) {
-          localStorage.setItem(savedEmailKey, emailInput.value);
-        } else {
-          localStorage.removeItem(savedEmailKey);
-        }
-      } catch {
-        // 이메일 기억하기를 사용할 수 없어도 폼 확인을 계속합니다.
-      }
-
-      // 데모 로그인: 입력 형식 확인 후 테스트 페이지로 이동합니다.
-      window.location.assign("./test.html");
-    });
-  </script>
-
-
-</body></html>
+      <p data-i18n="signupIntro"></p>
+      <form id="signup-form" novalidate>
+        <label class="field-label" for="signup-name" data-i18n="name"></label
+        ><input
+          class="text-input"
+          id="signup-name"
+          required
+          maxlength="50"
+          autocomplete="name"
+        /><label class="field-label" for="signup-language" data-i18n="language"></label
+        ><select class="text-input" id="signup-language" required>
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="vi">Tiếng Việt</option>
+          <option value="de">Deutsch</option>
+        </select>
+        <p class="form-caption" id="signup-mode" data-i18n="signupDemo"></p>
+        <p id="signup-error" class="field-error" role="alert" hidden></p>
+        <button
+          class="submit-button"
+          id="signup-submit"
+          type="submit"
+          data-i18n="createUser"
+        ></button>
+      </form>
+    </dialog>
+    <script src="./js/locales/ko.js"></script>
+    <script src="./js/locales/en.js"></script>
+    <script src="./js/locales/vi.js"></script>
+    <script src="./js/locales/de.js"></script>
+    <script src="./js/i18n.js"></script>
+    <script src="./js/user-api.js"></script>
+    <script src="./js/login.js"></script>
+  </body>
+</html>

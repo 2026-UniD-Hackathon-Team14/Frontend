@@ -6,12 +6,12 @@ function renderInvitations() {
     ? workspace.invitations
         .map(
           (invite) => `<article class="invitation-item">
-    <div><strong>${esc(invite.name)}</strong><small>${esc(invite.email)}</small><span class="pill">${invite.status === "ACCEPTED" ? "데모 참여 완료" : invite.status === "CANCELLED" ? "취소됨" : "초대 준비 · 미발송"}</span></div>
-    ${invite.status === "PENDING" ? `<div class="invitation-actions"><button type="button" class="btn soft" data-accept-invite="${esc(invite.id)}">데모: 참여 수락</button><button type="button" class="btn" data-cancel-invite="${esc(invite.id)}">취소</button></div>` : ""}
+    <div><strong>${esc(invite.name)}</strong><small>${esc(invite.email)}</small><span class="pill">${invite.status === "ACCEPTED" ? t("inviteAccepted") : invite.status === "CANCELLED" ? t("inviteCancelled") : t("invitePending")}</span></div>
+    ${invite.status === "PENDING" ? `<div class="invitation-actions"><button type="button" class="btn soft" data-accept-invite="${esc(invite.id)}">${esc(t("acceptDemo"))}</button><button type="button" class="btn" data-cancel-invite="${esc(invite.id)}">${esc(t("cancel"))}</button></div>` : ""}
   </article>`,
         )
         .join("")
-    : '<p class="empty">아직 준비한 초대가 없어요.</p>';
+    : '<p class="empty">' + esc(t("emptyInvitations")) + "</p>";
 }
 function createInvitation(values) {
   const workspace = activeWorkspace();
@@ -53,7 +53,7 @@ function initInvitations() {
   $("#invite-form").onsubmit = (event) => {
     event.preventDefault();
     const name = $("#invite-name").value.trim();
-    $("#invite-name").setCustomValidity(name ? "" : "이름을 입력해 주세요.");
+    validationMessage($("#invite-name"), name ? "" : "nameRequired");
     if (!$("#invite-form").reportValidity()) return;
     const invite = createInvitation({
       name,
@@ -61,13 +61,13 @@ function initInvitations() {
       language: $("#invite-language").value,
     });
     if (!invite) {
-      $("#invite-email").setCustomValidity("이미 초대했거나 참여 중인 이메일이에요.");
+      validationMessage($("#invite-email"), "inviteDuplicate");
       $("#invite-email").reportValidity();
       return;
     }
     $("#invite-form").reset();
     renderInvitations();
-    toast("초대를 준비했어요. 실제 이메일은 전송되지 않습니다.");
+    toast("invitePrepared");
   };
   document.addEventListener("click", (event) => {
     const accept = event.target.closest("button[data-accept-invite]");
@@ -76,7 +76,7 @@ function initInvitations() {
       renderMembers();
       renderMessages();
       renderBoard();
-      toast("로컬 데모에 팀원이 참여했어요.");
+      toast("memberJoined");
     }
     const cancel = event.target.closest("button[data-cancel-invite]");
     if (cancel) {

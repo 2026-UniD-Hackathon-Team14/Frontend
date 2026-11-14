@@ -14,27 +14,19 @@ function renderWorkspaces() {
   $("#invite-friends").disabled = !hasWorkspace;
   $("#message-input").disabled = !hasWorkspace;
   $("#send").disabled = !hasWorkspace;
-  $("#message-input").placeholder = hasWorkspace
-    ? "어떤 생각이든 편하게 나눠 보세요."
-    : "먼저 워크스페이스를 만들어 주세요.";
-  $("#room-title").textContent = hasWorkspace ? "# " + workspace.name : "워크스페이스 없음";
+  $("#message-input").placeholder = hasWorkspace ? t("messagePlaceholder") : t("createFirst");
+  $("#room-title").textContent = hasWorkspace ? "# " + workspace.name : t("noWorkspace");
   $("#breadcrumb").textContent = workspace
-    ? "내 워크스페이스 / " + workspace.name
-    : "내 워크스페이스";
-  $("#page-title").textContent = workspace?.name || "새로운 대화를 시작해 보세요";
+    ? t("myWorkspaces") + " / " + workspace.name
+    : t("myWorkspaces");
+  $("#page-title").textContent = workspace?.name || t("startConversation");
   renderMembers();
 }
 function renderMembers() {
   const workspace = activeWorkspace();
-  if (!workspace) {
-    $("#member-count").textContent = "팀원 0명";
-    $("#member-avatars").innerHTML = "";
-    $("#member-avatars").setAttribute("aria-label", "팀원 없음");
-    $("#translation-hint").textContent = "WORKSPACE 옆 + 버튼으로 새 공간을 만들 수 있어요.";
-    return;
-  }
-  $("#member-count").textContent = "팀원 " + workspace.members.length + "명";
-  $("#member-avatars").innerHTML = workspace.members
+  const members = workspace?.members || [];
+  $("#member-count").textContent = t("memberCount", { count: members.length });
+  $("#member-avatars").innerHTML = members
     .map(
       (m) =>
         `<span class="avatar ${m.id === currentUser.id ? "me" : ""}" title="${esc(m.name)}">${esc(Array.from(m.name)[0] || "?")}</span>`,
@@ -42,23 +34,21 @@ function renderMembers() {
     .join("");
   $("#member-avatars").setAttribute(
     "aria-label",
-    "팀원: " + workspace.members.map((m) => m.name).join(", "),
+    members.length
+      ? t("membersLabel", { names: members.map((m) => m.name).join(", ") })
+      : t("noMembers"),
   );
-  $("#translation-hint").textContent =
-    "로컬 데모 · 팀원 언어: " +
-    [
-      ...new Set(
-        workspace.members.map(
-          (m) =>
-            ({ ko: "한국어", en: "English", vi: "Tiếng Việt", de: "Deutsch" })[m.language] ||
-            m.language,
+  $("#translation-hint").textContent = workspace
+    ? t("languageHint", {
+        languages: [...new Set(members.map((m) => I18n.names[m.language] || m.language))].join(
+          " · ",
         ),
-      ),
-    ].join(" · ");
+      })
+    : t("createHint");
 }
 function selectWorkspace(id) {
   if (busy) {
-    toast("메시지 처리가 끝난 뒤 이동해 주세요.");
+    toast("busyMove");
     return;
   }
   if (!appState.workspaces.some((w) => w.id === id)) return;
@@ -100,7 +90,7 @@ function initSidebar() {
     $("#menu").setAttribute("aria-expanded", String(open));
   };
   $("#create-workspace").onclick = () => {
-    if (busy) return toast("메시지 처리가 끝난 뒤 다시 시도해 주세요.");
+    if (busy) return toast("busyRetry");
     $("#workspace-form").reset();
     $("#workspace-name").setCustomValidity("");
     $("#workspace-dialog").showModal();
@@ -110,17 +100,18 @@ function initSidebar() {
     event.preventDefault();
     const input = $("#workspace-name");
     const name = input.value.trim();
-    input.setCustomValidity(
+    validationMessage(
+      input,
       !name
-        ? "워크스페이스 이름을 입력해 주세요."
+        ? "workspaceRequired"
         : appState.workspaces.some((w) => w.name.toLocaleLowerCase() === name.toLocaleLowerCase())
-          ? "이미 같은 이름의 워크스페이스가 있어요."
+          ? "workspaceDuplicate"
           : "",
     );
     if (!$("#workspace-form").reportValidity()) return;
     createWorkspace(name, $("#workspace-summary").value.trim());
     $("#workspace-dialog").close();
-    toast("새 워크스페이스로 이동했어요.");
+    toast("workspaceCreated");
   };
   renderWorkspaces();
 }

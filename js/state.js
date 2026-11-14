@@ -1,6 +1,10 @@
 // 로컬 저장 어댑터. 서버 연동 시 이 계층을 API 호출로 교체합니다.
-const STORAGE_KEY = "nunchichat.workspaces.v1";
-const currentUser = { id: "me", name: "민준", language: "ko" };
+const currentUser = UserAPI.user || { id: "me", name: "민준", language: I18n.language };
+currentUser.language = I18n.language;
+const STORAGE_KEY =
+  currentUser.id === "me"
+    ? "nunchichat.workspaces.v1"
+    : "nunchichat.workspaces.v1." + currentUser.id;
 function newId(prefix) {
   return (
     prefix +
@@ -68,7 +72,7 @@ function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
     return true;
   } catch {
-    toast("브라우저에 저장하지 못했어요. 이번 화면에서만 유지됩니다.");
+    toast("storageFailed");
     return false;
   }
 }

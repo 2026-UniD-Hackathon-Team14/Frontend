@@ -1,8 +1,7 @@
 function renderMessages() {
   const el = $("#messages");
   if (!activeWorkspace()) {
-    el.innerHTML =
-      '<div class="empty">참여 중인 워크스페이스가 없어요. + 버튼으로 새로운 공간을 만들어 주세요.</div>';
+    el.innerHTML = '<div class="empty">' + esc(t("noWorkspaceMessage")) + "</div>";
     return;
   }
   el.innerHTML =
@@ -12,26 +11,37 @@ function renderMessages() {
     chats[channel]
       .map((m, i) => {
         if (m.agreement) return renderAgreementMessage(m.agreement);
-        return `<div class="message ${m.name === "민준" ? "mine" : ""}"><span class="avatar ${m.name === "Lena" ? "lena" : m.name === "Linh" ? "linh" : m.name === "민준" ? "me" : ""}">${esc(m.initial)}</span><div class="message-body"><div class="who">${esc(m.name)}<span class="lang">${esc(m.lang)}</span><span class="time">${esc(m.time)}</span></div><div class="bubble">${esc(m.text)}</div>${m.meaning ? '<div class="meaning">✓ 전달할 뜻: ' + esc(m.meaning) + "</div>" : ""}${m.translation ? '<div class="original">English · 예시 수신 화면<br>' + esc(m.translation) + "</div>" : ""}${m.original ? `<div class="original" ${m.open ? "" : "hidden"}>원문 · ${esc(m.lang)}<br>${esc(m.original)}</div><button class="link" data-original="${i}">${m.open ? "원문 숨기기 ▴" : "원문 보기 ▾"}</button>` : ""}</div></div>`;
+        const original = m.originalText ?? m.text ?? "";
+        const display = ContentAPI.messageText(m);
+        const hasTranslation = display !== original;
+        const lang = m.originalLanguage || m.language || "ko";
+        const mine = m.senderId
+          ? String(m.senderId) === currentUser.id
+          : m.name === currentUser.name;
+        const intent = m.selectedIntent ? t("intent." + m.selectedIntent) : m.meaning || "";
+        return `<div class="message ${mine ? "mine" : ""}"><span class="avatar ${mine ? "me" : ""}">${esc(m.initial || Array.from(m.senderName || m.name || "?")[0])}</span><div class="message-body"><div class="who">${esc(m.senderName || m.name)}<span class="lang">${esc(I18n.names[lang] || lang)}</span><span class="time">${esc(m.time || "")}</span></div><div class="bubble">${esc(display)}</div>${intent ? '<div class="meaning">✓ ' + esc(t("intentLabel", { meaning: intent })) + "</div>" : ""}${m.customIntentText ? '<div class="original">' + esc(m.customIntentText) + "</div>" : ""}${hasTranslation ? `<div class="original" ${m.open ? "" : "hidden"}>${esc(t("original"))}<br>${esc(original)}</div><button class="link" data-original="${i}">${esc(t(m.open ? "hideOriginal" : "showOriginal"))}</button>` : ""}</div></div>`;
       })
       .join("");
   if (!chats[channel].length)
-    el.innerHTML += '<div class="empty">아직 대화가 없어요. 첫 메시지를 남겨 보세요.</div>';
+    el.innerHTML += '<div class="empty">' + esc(t("emptyChat")) + "</div>";
   el.scrollTop = el.scrollHeight;
 }
-function pushMessage(text, meaning = "", translation = "") {
+function pushMessage(text, selectedIntent = null, customIntentText = "") {
+  if (!activeWorkspace()) return;
   chats[channel].push({
-    name: "민준",
-    initial: "민",
-    lang: "한국어",
-    time: new Date().toLocaleTimeString("ko-KR", {
+    senderId: currentUser.id,
+    name: currentUser.name,
+    initial: Array.from(currentUser.name)[0],
+    originalLanguage: currentUser.language,
+    originalText: text,
+    text,
+    selectedIntent,
+    customIntentText,
+    time: new Date().toLocaleTimeString(I18n.locale, {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     }),
-    text,
-    meaning,
-    translation,
   });
   saveState();
   $("#message-input").value = "";
@@ -43,28 +53,27 @@ async function sendMessage() {
   if (!text) return;
   busy = true;
   $("#send").disabled = true;
-  $("#send").textContent = "뜻 확인 중…";
-  await new Promise((r) => setTimeout(r, 450));
+  $("#send").textContent = t("checking");
+  await new Promise((resolve) => setTimeout(resolve, 450));
+  // Demo analysis only; production uses POST /rooms/{roomId}/messages/analyze.
   if (text.includes("생각해볼게요")) {
     pending = text;
     $("#pending-text").textContent = text;
     $("#meaning-dialog").showModal();
   } else {
     pushMessage(text);
-    toast("메시지를 추가했어요. 실제 번역·전송은 연결되지 않은 데모예요.");
+    toast("messageAdded");
   }
   busy = false;
   $("#send").disabled = false;
-  $("#send").textContent = "보내기 ↑";
+  $("#send").textContent = t("send");
 }
-
-// 입력, 전송, 원문 보기 이벤트
 function initChat() {
   document.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-original]");
     if (!button) return;
-    const message = chats[channel][Number(button.dataset.original)];
-    message.open = !message.open;
+    const m = chats[channel][Number(button.dataset.original)];
+    m.open = !m.open;
     renderMessages();
   });
   $("#message-form").addEventListener("submit", (event) => {
