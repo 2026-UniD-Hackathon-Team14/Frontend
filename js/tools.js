@@ -320,7 +320,7 @@ function renderCalendarTool() {
         "</span>" +
         serverTools.events
           .filter((e) => e.date === date)
-          .map((e) => '<div class="calendar-event">' + esc(e.title) + "</div>")
+          .map((e) => '<button type="button" class="calendar-event" data-event-preview="' + esc(e.id) + '">' + esc(e.title) + "</button>")
           .join("") +
         "</div>"
       );
