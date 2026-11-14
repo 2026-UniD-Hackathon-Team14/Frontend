@@ -7,54 +7,94 @@
     <link rel="stylesheet" href="./style.css" />
     <link rel="icon" type="image/png" href="./assets/brand/icon.png" />
     <meta name="theme-color" content="#1F3A5F" />
+    <link rel="stylesheet" href="./css/i18n.css" />
+    <link rel="stylesheet" href="./css/api.css" />
   </head>
-  <body>
+  <body data-page="main">
+    <div id="api-error" class="api-error" role="alert" hidden>
+      <span></span><button type="button" id="retry-api" data-i18n="api.refresh"></button
+      ><button type="button" id="dismiss-error" data-i18n-aria-label="close">✕</button>
+    </div>
     <div class="shell">
       <aside class="side" id="sidebar">
         <div class="logo">
           <span class="brand-logo"><img src="./assets/brand/logo-light.png" alt="눈치Chat" /></span>
         </div>
-        <div class="tagline">다른 언어, 같은 마음으로.</div>
+        <div class="tagline"><span data-i18n="tagline">다른 언어, 같은 마음으로.</span></div>
         <div class="workspace-label">
-          <span>WORKSPACE</span
+          <span><span data-i18n="workspaces">WORKSPACE</span></span
           ><button
             type="button"
             id="create-workspace"
             aria-label="새 워크스페이스 만들기"
+            data-i18n-aria-label="createWorkspace"
             title="새 워크스페이스 만들기"
+            data-i18n-title="createWorkspace"
           >
             ＋
           </button>
         </div>
-        <nav id="workspace-list" aria-label="워크스페이스 목록"></nav>
-        <nav class="tool-nav" aria-label="일정 및 회의 도구">
-          <div class="nav-label">회의 · 일정</div>
-          <button type="button" class="nav-btn" data-tool-view="chat">채팅</button>
-          <button type="button" class="nav-btn" data-tool-view="receipt">합의 영수증</button>
-          <button type="button" class="nav-btn" data-tool-view="calendar">공용 캘린더</button>
-          <button type="button" class="nav-btn" data-tool-view="todo">개인 투두</button>
+        <nav
+          id="workspace-list"
+          aria-label="워크스페이스 목록"
+          data-i18n-aria-label="workspaceList"
+        ></nav>
+        <nav class="tool-nav" aria-label="일정 및 회의 도구" data-i18n-aria-label="tools.tools">
+          <div class="nav-label"><span data-i18n="tools.nav">회의 · 일정</span></div>
+          <button type="button" class="nav-btn" data-tool-view="chat">
+            <span data-i18n="tools.chat">채팅</span>
+          </button>
+          <button type="button" class="nav-btn" data-tool-view="receipt">
+            <span data-i18n="tools.receipt">합의 영수증</span>
+          </button>
+          <button type="button" class="nav-btn" data-tool-view="calendar">
+            <span data-i18n="tools.calendar">공용 캘린더</span>
+          </button>
+          <button type="button" class="nav-btn" data-tool-view="todo">
+            <span data-i18n="tools.todo">개인 투두</span>
+          </button>
         </nav>
         <div class="side-bottom">
           <div class="profile">
-            <span class="avatar me">민</span>
+            <span class="avatar me" id="profile-avatar"></span>
             <div>
-              <strong class="detail-style-3">김민준</strong
-              ><small><span class="online"></span>한국어 · 온라인</small>
+              <strong class="detail-style-3" id="profile-name"></strong
+              ><small id="profile-language"></small>
             </div>
           </div>
         </div>
       </aside>
       <main class="main">
         <header class="top">
-          <button class="mobile-toggle" id="menu" aria-label="메뉴 열기" aria-expanded="false">
+          <button
+            class="mobile-toggle"
+            id="menu"
+            aria-label="메뉴 열기"
+            data-i18n-aria-label="menu"
+            aria-expanded="false"
+          >
             ☰
           </button>
           <div>
             <div class="breadcrumb" id="breadcrumb">내 워크스페이스 / 3조</div>
             <h1 id="page-title">함께 만드는, 우리 팀 프로젝트</h1>
           </div>
-          <button type="button" class="btn leave-button" id="leave-workspace">
-            워크스페이스 나가기
+          <label class="ui-language"
+            ><span data-i18n="uiLanguage"></span
+            ><select
+              id="ui-language"
+              data-language-select
+              aria-label="화면 언어"
+              data-i18n-aria-label="uiLanguage"
+            >
+              <option value="ko">한국어</option>
+              <option value="en">English</option>
+              <option value="vi">Tiếng Việt</option>
+              <option value="de">Deutsch</option>
+            </select></label
+          >
+          <button type="button" class="btn leave-button" id="logout">
+            <span data-i18n="api.logout">워크스페이스 나가기</span>
           </button>
         </header>
         <div class="layout" id="chat-view">
@@ -65,7 +105,7 @@
                 <span id="member-count">팀원 4명</span>
                 <div class="people" id="member-avatars"></div>
                 <button type="button" class="btn invite-button" id="invite-friends">
-                  ＋ 친구 초대
+                  <span data-i18n="inviteFriends">＋ 친구 초대</span>
                 </button>
               </div>
               <div class="room-actions">
@@ -76,221 +116,183 @@
                   aria-haspopup="dialog"
                   aria-controls="agreement-dialog"
                 >
-                  합의 카드 만들기
+                  <span data-i18n="createCard">합의 카드 만들기</span>
                 </button>
-                <button type="button" class="btn primary" id="end-meeting">중간 결산</button>
+                <button type="button" class="btn primary" id="settle-agreements">
+                  <span data-i18n="tools.settle">중간 결산</span>
+                </button>
               </div>
             </div>
-            <div class="messages" id="messages" role="log" aria-label="팀 채팅"></div>
+            <div
+              class="messages"
+              id="messages"
+              role="log"
+              aria-label="팀 채팅"
+              data-i18n-aria-label="chatLabel"
+            ></div>
             <form class="composer" id="message-form">
               <div class="compose-box">
                 <textarea
                   id="message-input"
                   aria-label="메시지 입력"
+                  data-i18n-aria-label="messageInput"
                   placeholder="어떤 생각이든 편하게 나눠 보세요."
+                  data-i18n-placeholder="messagePlaceholder"
                   required
                 ></textarea>
                 <div class="compose-bottom">
-                  <button class="btn primary" id="send">보내기 ↑</button>
+                  <button class="btn primary" id="send">
+                    <span data-i18n="send">보내기 ↑</span>
+                  </button>
                 </div>
               </div>
               <div class="composer-meta">
-                <span class="room-language">◎ 한국어로 보는 중</span>
-                <label class="agreement-viewer-label">데모 확인자<select
-                  id="agreement-viewer"
-                  aria-label="데모에서 확인할 팀원 선택"
-                ></select></label>
+                <span id="connection-status" data-i18n="api.connecting"></span>
+                <span class="room-language" id="viewing-language"></span>
               </div>
               <div class="hint">
-                <span id="translation-hint">로컬 데모 · 팀원 언어</span
-                ><span>Enter 전송 · Shift + Enter 줄바꿈</span>
+                <span id="translation-hint"></span><span data-i18n="shortcut"></span>
               </div>
             </form>
           </section>
           <aside class="board">
-            <div class="eyebrow">ON THE SAME PAGE</div>
+            <div class="eyebrow"><span data-i18n="boardEyebrow">ON THE SAME PAGE</span></div>
             <div class="board-title">
-              <h2>우리 팀 합의 보드</h2>
+              <h2><span data-i18n="boardTitle">우리 팀 합의 보드</span></h2>
               <span class="counter" id="board-count">0</span>
             </div>
-            <div class="filters" role="group" aria-label="합의 종류">
-              <button class="filter active" data-filter="전체">전체</button
-              ><button class="filter" data-filter="약속">약속</button
-              ><button class="filter" data-filter="규칙">규칙</button
-              ><button class="filter" data-filter="공지">공지</button>
+
+            <div id="board-cards">
+              <p class="empty"><span data-i18n="boardEmpty">아직 등록된 합의가 없어요.</span></p>
             </div>
-            <div id="board-cards"><p class="empty">아직 등록된 합의가 없어요.</p></div>
           </aside>
         </div>
-        <section id="tool-view" class="tool-view" aria-label="워크스페이스 도구" hidden>
+        <section
+          id="tool-view"
+          class="tool-view"
+          aria-label="워크스페이스 도구"
+          data-i18n-aria-label="tools.workspaceTools"
+          hidden
+        >
           <div id="tool-content"></div>
         </section>
       </main>
     </div>
     <dialog id="meaning-dialog">
       <div class="modal-title">
-        <h2>잠깐, 어떤 뜻인가요?</h2>
-        <button class="close" aria-label="닫기">✕</button>
+        <h2 data-i18n="meaningTitle"></h2>
+        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
       </div>
-      <p>
-        ‘생각해볼게요’는 언어와 문화에 따라 다르게 읽힐 수 있어요. 전달하고 싶은 뜻을 골라 주세요.
-      </p>
+      <p data-i18n="api.meaningHelp"></p>
       <div class="warning" id="pending-text"></div>
-      <button class="option" data-meaning="아직 결정하지 않았어요">
-        ① 아직 결정하지 않았어요<small
-          >I haven't decided on that part yet — I'll think it over.</small
-        ></button
-      ><button class="option" data-meaning="정중하게 거절하는 뜻이에요">
-        ② 정중하게 거절하는 뜻이에요<small>I don't think I can take that part on, sorry.</small>
-      </button>
-      <form id="custom-meaning">
-        <label class="field"
-          >③ 다른 뜻이에요<input
-            id="custom-text"
-            placeholder="예: 오늘 밤까지 결정해서 답할게요"
-            required
-            maxlength="300"
-        /></label>
-        <div class="actions">
-          <button class="btn soft">이 뜻으로 보내기</button
-          ><button type="button" class="btn" id="send-original">원문 그대로 보내기</button>
-        </div>
-      </form>
-      <p>예시 표현만 감지하는 데모입니다. 실제 AI 번역은 연결되지 않았어요.</p>
+      <div id="meaning-options"></div>
+      <button type="button" class="btn" id="send-original" data-i18n="sendOriginal"></button>
     </dialog>
 
     <dialog id="workspace-dialog" aria-labelledby="workspace-dialog-title">
       <div class="modal-title">
-        <h2 id="workspace-dialog-title">새 워크스페이스</h2>
-        <button type="button" class="close" aria-label="닫기">✕</button>
+        <h2 id="workspace-dialog-title"><span data-i18n="workspaceTitle">새 워크스페이스</span></h2>
+        <button type="button" class="close" aria-label="닫기" data-i18n-aria-label="close">
+          ✕
+        </button>
       </div>
-      <p>함께 이야기하고 약속을 정할 공간을 만들어 보세요.</p>
+      <p>
+        <span data-i18n="workspaceIntro">함께 이야기하고 약속을 정할 공간을 만들어 보세요.</span>
+      </p>
       <form id="workspace-form">
         <label class="field"
-          >워크스페이스 이름<input
+          ><span data-i18n="workspaceName">워크스페이스 이름</span
+          ><input
             id="workspace-name"
             placeholder="예: 마케팅 프로젝트"
+            data-i18n-placeholder="workspacePlaceholder"
             required
             maxlength="50"
         /></label>
-        <label class="field"
-          >설명 <span class="optional">선택</span
-          ><textarea
-            id="workspace-summary"
-            placeholder="어떤 일을 함께 하나요?"
-            maxlength="200"
-            rows="3"
-          ></textarea>
-        </label>
-        <p class="local-note">현재 브라우저에 저장되는 로컬 워크스페이스입니다.</p>
+
+        <p class="local-note">
+          <span data-i18n="api.roomStorage"></span>
+        </p>
         <div class="actions modal-actions">
-          <button type="button" class="btn close">취소</button
-          ><button class="btn primary" type="submit">만들고 이동하기</button>
+          <button type="button" class="btn close"><span data-i18n="cancel">취소</span></button
+          ><button class="btn primary" type="submit">
+            <span data-i18n="createAndOpen">만들고 이동하기</span>
+          </button>
         </div>
+      </form>
+      <hr />
+      <form id="join-room-form">
+        <label class="field"
+          ><span data-i18n="api.roomId"></span
+          ><input id="join-room-id" inputmode="numeric" pattern="[0-9]+" required
+        /></label>
+        <p data-i18n="api.joinHelp"></p>
+        <button type="submit" class="btn" data-i18n="api.join"></button>
       </form>
     </dialog>
     <dialog id="invite-dialog" aria-labelledby="invite-dialog-title">
       <div class="modal-title">
-        <h2 id="invite-dialog-title">친구 초대하기</h2>
-        <button type="button" class="close" aria-label="닫기">✕</button>
+        <h2 id="invite-dialog-title" data-i18n="api.addMember"></h2>
+        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
       </div>
-      <p><strong id="invite-workspace-name"></strong>에 함께할 친구를 추가해 보세요.</p>
-      <div class="local-note">
-        초대 기능 미리보기입니다. 실제 이메일은 발송되지 않아요. 아래 ‘데모: 참여 수락’으로 참여 후
-        화면을 확인할 수 있어요.
-      </div>
+      <p>
+        <strong id="invite-workspace-name"></strong> · <span data-i18n="api.roomId"></span>
+        <strong id="invite-room-id"></strong>
+      </p>
+      <p data-i18n="api.memberHelp"></p>
       <form id="invite-form">
         <label class="field"
-          >친구 이름<input id="invite-name" placeholder="이름" required maxlength="50"
+          ><span data-i18n="api.userId"></span
+          ><input id="invite-user-id" inputmode="numeric" pattern="[0-9]+" required
         /></label>
-        <label class="field"
-          >이메일<input
-            id="invite-email"
-            type="email"
-            placeholder="friend@example.com"
-            required
-            maxlength="254"
-        /></label>
-        <label class="field"
-          >사용 언어<select id="invite-language">
-            <option value="ko">한국어</option>
-            <option value="en">English</option>
-            <option value="vi">Tiếng Việt</option>
-            <option value="de">Deutsch</option>
-          </select></label
-        >
-        <div class="actions modal-actions">
-          <button class="btn primary" type="submit">초대 준비하기</button>
+        <div class="actions">
+          <button type="submit" class="btn primary" data-i18n="api.addMember"></button>
         </div>
       </form>
-      <h3 class="invitation-heading">초대 목록</h3>
+      <h3 data-i18n="api.members"></h3>
       <div id="invitation-list"></div>
     </dialog>
-    <dialog id="leave-dialog" aria-labelledby="leave-title" aria-describedby="leave-description">
-      <div class="modal-title">
-        <h2 id="leave-title">정말 나가시겠습니까?</h2>
-        <button type="button" class="close" aria-label="닫기">✕</button>
-      </div>
-      <p id="leave-description">
-        <strong id="leave-workspace-name"></strong> 워크스페이스에서 나갑니다. 이 브라우저의 목록과
-        해당 공간에 저장한 내용이 제거됩니다.
-      </p>
-      <div class="actions modal-actions">
-        <button type="button" class="btn close" autofocus>취소</button
-        ><button type="button" class="btn danger" id="confirm-leave">나가기</button>
-      </div>
-    </dialog>
+
     <dialog id="agreement-dialog" aria-labelledby="agreement-heading">
-      <h2 id="agreement-heading">합의 카드 만들기</h2>
-      <p class="agreement-description">
-        방금 대화에서 정한 내용을 카드로 고정해요. 팀원 모두가 확인하면 합의 보드에 올라가요.
-      </p>
+      <h2 id="agreement-heading" data-i18n="createCard"></h2>
+      <p class="agreement-description" data-i18n="agreementDescription"></p>
       <form id="agreement-form">
-        <fieldset class="agreement-kind">
-          <legend>종류</legend>
-          <label
-            ><input type="radio" name="agreement-type" value="약속" checked /><span
-              >약속</span
-            ></label
-          >
-          <label><input type="radio" name="agreement-type" value="규칙" /><span>규칙</span></label>
-          <label><input type="radio" name="agreement-type" value="공지" /><span>공지</span></label>
-        </fieldset>
-        <label class="field">제목<input id="agreement-title" required maxlength="80" /></label>
         <label class="field"
-          >내용<textarea id="agreement-text" rows="1" required maxlength="500"></textarea>
+          ><span data-i18n="title"></span
+          ><input id="agreement-title" required maxlength="80" /></label
+        ><label class="field"
+          ><span data-i18n="content"></span
+          ><textarea id="agreement-text" rows="3" maxlength="500"></textarea>
         </label>
         <div class="agreement-row">
-          <div class="field">
-            담당자
-            <div class="assignee-box">
-              <span id="assignee-chips"></span
-              ><button
-                type="button"
-                id="assignee-add"
-                aria-expanded="false"
-                aria-controls="assignee-picker"
-              >
-                + 추가
-              </button>
-            </div>
-            <div id="assignee-picker" class="assignee-picker" hidden></div>
-          </div>
-          <label class="field">마감일<input id="agreement-date" type="date" required /></label>
+          <label class="field"
+            ><span data-i18n="assignee"></span
+            ><select id="agreement-assignee" required></select></label
+          ><label class="field"
+            ><span data-i18n="dueDate"></span><input id="agreement-date" type="date"
+          /></label>
         </div>
         <div class="agreement-preview" aria-live="polite">
-          <small>채팅에 올라갈 카드</small><strong id="agreement-preview-title"></strong
-          ><small>현재 워크스페이스 팀원에게 보여요 · 로컬 데모</small>
+          <small data-i18n="previewCard"></small><strong id="agreement-preview-title"></strong
+          ><small data-i18n="api.serverCard"></small>
         </div>
         <div class="actions agreement-actions">
-          <button class="btn" id="agreement-cancel" type="button">취소</button
-          ><button class="btn primary" type="submit">채팅에 카드 올리기</button>
+          <button type="button" class="btn" id="agreement-cancel" data-i18n="cancel"></button
+          ><button class="btn primary" type="submit" data-i18n="postCard"></button>
         </div>
       </form>
     </dialog>
     <div class="toast" id="toast" role="status" hidden></div>
     <!-- 공통 도구와 상태 → 기능 → 앱 초기화 순으로 실행합니다. -->
+    <script src="./js/locales/ko.js"></script>
+    <script src="./js/locales/en.js"></script>
+    <script src="./js/locales/vi.js"></script>
+    <script src="./js/locales/de.js"></script>
+    <script src="./js/i18n.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/user-api.js"></script>
     <script src="./js/utils.js"></script>
+    <script src="./js/timeline.js"></script>
     <script src="./js/state.js"></script>
     <script src="./js/toast.js"></script>
     <script src="./js/chat.js"></script>
@@ -298,7 +300,7 @@
     <script src="./js/sidebar.js"></script>
     <script src="./js/board.js"></script>
     <script src="./js/invitations.js"></script>
-    <script src="./js/workspace-leave.js"></script>
+    <script src="./js/realtime.js"></script>
     <script src="./js/tools.js"></script>
     <script src="./script.js"></script>
   </body>

@@ -1,28 +1,62 @@
-function selectMeaning(meaning) {
-  const translation =
-    meaning === "아직 결정하지 않았어요"
-      ? "I haven't decided on that part yet — I'll think it over."
-      : meaning === "정중하게 거절하는 뜻이에요"
-        ? "I don't think I can take that part on, sorry."
-        : "";
-  pushMessage(pending, meaning, translation);
-  $("#meaning-dialog").close();
-  if (meaning && !translation)
-    toast("직접 입력한 뜻을 저장했어요. 실제 번역은 API 연결이 필요해요.");
+"use strict";
+function renderMeaning() {
+  if (!pending) return;
+  $("#pending-text").textContent = pending.text;
+  const intents = new Set();
+  $("#meaning-options").innerHTML = pending.expressions
+    .map((expression) => {
+      const candidates = (expression.candidates || []).filter(
+        (c) =>
+          ["ACCEPT", "REJECT", "UNDECIDED", "OTHER"].includes(c.intent) && !intents.has(c.intent),
+      );
+      candidates.forEach((c) => intents.add(c.intent));
+      return (
+        "<section><p>" +
+        esc(expression.phrase) +
+        "</p>" +
+        candidates
+          .map(
+            (c) =>
+              '<button type="button" class="option" data-meaning="' +
+              esc(c.intent) +
+              '">' +
+              esc(c.label) +
+              "</button>",
+          )
+          .join("") +
+        "</section>"
+      );
+    })
+    .join("");
 }
-
-// 의미 선택과 모달 이벤트
 function initMeaning() {
   document.addEventListener("click", (event) => {
     const button = event.target.closest("button");
     if (!button) return;
-    if (button.dataset.meaning) selectMeaning(button.dataset.meaning);
-    if (button.classList.contains("close")) button.closest("dialog").close();
+    if (button.classList.contains("close")) button.closest("dialog")?.close();
+    if (button.dataset.meaning && pending) {
+      if (busy) return;
+      busy = true;
+      runAction(button, () => pushMessage(pending.text, button.dataset.meaning, false)).finally(
+        () => {
+          busy = false;
+          renderWorkspaces();
+        },
+      );
+    }
   });
-  $("#send-original").onclick = () => selectMeaning("");
-  $("#custom-meaning").onsubmit = (event) => {
-    event.preventDefault();
-    const meaning = $("#custom-text").value.trim();
-    if (meaning) selectMeaning(meaning);
+  $("#send-original").onclick = (event) => {
+    if (busy || !pending) return;
+    busy = true;
+    runAction(event.currentTarget, () => pushMessage(pending.text, null, true)).finally(() => {
+      busy = false;
+      renderWorkspaces();
+    });
   };
+  $("#meaning-dialog").addEventListener("cancel", (event) => {
+    if (busy) event.preventDefault();
+  });
+  $("#meaning-dialog").addEventListener("close", () => {
+    if (!busy) pending = null;
+  });
 }
