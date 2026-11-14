@@ -1,4 +1,21 @@
 /* dialog styles */
+.agreement-details {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.agreement-details:disabled { opacity: 0.7; }
+.agreement-summary {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.consent-list { display: grid; gap: 12px; font-size: 13px; }
+.consent-list label { display: flex; align-items: center; gap: 8px; }
+.consent-list input { accent-color: var(--green); }
 .actions {
   display: flex;
   gap: 8px;
@@ -96,3 +113,55 @@ dialog p {
   z-index: 10;
   box-shadow: 0 5px 25px #0002;
 }
+
+/* 합의 카드 작성창: 제공된 시안의 구성과 색상 */
+#agreement-dialog {
+  width: min(540px, calc(100vw - 32px));
+  padding: 26px 24px 24px;
+  border: 0;
+  border-radius: 16px;
+  color: #18202c;
+  background: #fff;
+  box-shadow: 0 24px 60px #121e3040;
+  font-family: "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+}
+#agreement-dialog::backdrop { background: #18202c66; backdrop-filter: none; }
+#agreement-dialog h2 { font-size: 19px; line-height: 1.4; }
+#agreement-dialog .agreement-description { margin: 6px 0 18px; font-size: 12px; line-height: 1.6; color: #304564; }
+#agreement-dialog .field { margin-top: 16px; font-size: 12px; font-weight: 500; }
+#agreement-dialog .field input, #agreement-dialog .field textarea {
+  min-height: 44px; padding: 10px 12px; border: 1px solid #c5cdd8;
+  border-radius: 9px; color: #18202c; font-size: 14px; font-weight: 400;
+}
+#agreement-dialog textarea { resize: vertical; }
+#agreement-dialog input:focus-visible, #agreement-dialog textarea:focus-visible, #agreement-dialog button:focus-visible { outline: 2px solid #1f3a5f; outline-offset: 3px; }
+.agreement-kind { display: flex; gap: 6px; padding: 0; margin: 0; border: 0; min-width: 0; }
+.agreement-kind legend { margin-bottom: 6px; font-size: 12px; font-weight: 500; }
+.agreement-kind label { position: relative; flex: 1; cursor: pointer; }
+.agreement-kind input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.agreement-kind span { display: block; padding: 7px 12px; border: 1px solid #c5cdd8; border-radius: 7px; text-align: center; font-size: 13px; }
+.agreement-kind input:checked + span { border-color: #1f3a5f; color: #18202c; font-weight: 700; }
+.agreement-kind input:focus-visible + span { outline: 2px solid #1f3a5f; outline-offset: 3px; }
+.agreement-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.agreement-row > * { min-width: 0; }
+.assignee-box { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 44px; margin-top: 6px; padding: 5px 10px; border: 1px solid #c5cdd8; border-radius: 9px; }
+#assignee-chips { display: contents; }
+.assignee-chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 8px 3px 3px; background: #f1f3f5; color: #18202c; }
+.assignee-chip > span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #9ca5b1; font-size: 10px; }
+#assignee-add { font-size: 12px; color: #5d6979; padding: 4px 0; }
+.assignee-picker { padding: 10px; border: 1px solid #c5cdd8; border-radius: 8px; margin-top: 6px; }
+#agreement-dialog .assignee-picker label { display: flex; align-items: center; gap: 8px; }
+#agreement-dialog .assignee-picker input { width: auto; min-height: 0; margin: 0; }
+.agreement-preview { display: grid; gap: 3px; margin-top: 16px; border: 1px dashed #9ca5b1; border-radius: 9px; padding: 10px 12px; background: #f8f9fb; overflow-wrap: anywhere; }
+.agreement-preview small { font-size: 11px; color: #304564; }
+.agreement-preview strong { font-size: 13px; font-weight: 500; }
+.agreement-actions { justify-content: flex-end; margin-top: 16px; gap: 7px; }
+#agreement-dialog .btn { border-color: #c5cdd8; color: #18202c; border-radius: 7px; font-size: 12px; min-height: 38px; }
+#agreement-dialog .btn.primary { color: #fff; background: #212f42; border-color: #212f42; }
+.chat-agreement { max-width: 520px; margin: 0 auto 24px; padding: 18px; border: 1px solid #1f3a5f; border-radius: 14px; background: #fff; color: #18202c; overflow-wrap: anywhere; }
+.chat-agreement h3 { margin: 10px 0; font-size: 17px; }
+.chat-agreement p { white-space: pre-wrap; font-size: 13px; }
+.chat-agreement strong { color: #1f3a5f; font-size: 13px; }
+.chat-agreement small { display: block; margin-top: 12px; color: #5d6979; font-size: 11px; }
+.chat-agreement input { accent-color: #1f3a5f; }
+@media (max-width: 480px) { #agreement-dialog { padding: 22px 18px; } .agreement-row { grid-template-columns: 1fr; gap: 0; } }
