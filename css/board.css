@@ -1,0 +1,100 @@
+/* board styles */
+.board {
+  background: #fafbf8;
+  border-left: 1px solid var(--line);
+  padding: 25px 20px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+.eyebrow {
+  font-size: 9px;
+  color: #98a18d;
+  letter-spacing: 1.8px;
+  font-weight: 700;
+}
+.board-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 17px;
+}
+.board-title h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.counter {
+  font-size: 10px;
+  background: #edf0e8;
+  color: #829073;
+  padding: 1px 7px;
+  border-radius: 5px;
+}
+.filters {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 18px;
+}
+.filter {
+  padding: 5px 11px;
+  font-size: 11px;
+  border-radius: 6px;
+  color: #8c9787;
+}
+.filter.active {
+  background: #e7eee3;
+  color: #456b44;
+  font-weight: 700;
+}
+.card {
+  border: 1px solid #e2e8dd;
+  border-radius: 10px;
+  background: white;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card h3 {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 9px 0;
+}
+.card p {
+  font-size: 11px;
+  color: #8a9486;
+  margin: 6px 0 13px;
+  line-height: 1.8;
+}
+.pill {
+  font-size: 9px;
+  color: #73845f;
+  background: #eff3e8;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+.pill.purple {
+  background: #f1edf6;
+  color: #9584aa;
+}
+.pill.orange {
+  background: #faf0df;
+  color: #b79358;
+}
+.confirmed {
+  font-size: 10px;
+  color: #729167;
+  border-top: 1px solid #f0f2ec;
+  padding-top: 11px;
+}
+.board-footer {
+  margin-top: auto;
+  padding-top: 32px;
+  font-size: 10px;
+  color: #9ba48f;
+  line-height: 1.9;
+}
+.board-footer strong {
+  display: block;
+  color: #78916c;
+  font-size: 11px;
+  margin-bottom: 6px;
+}

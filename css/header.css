@@ -1,0 +1,64 @@
+/* header styles */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.top {
+  height: 78px;
+  flex-shrink: 0;
+  padding: 0 30px;
+  background: white;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  gap: 16px;
+}
+.breadcrumb {
+  font-size: 11px;
+  color: var(--muted);
+}
+h1 {
+  font-size: 18px;
+  margin: 1px 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.people {
+  display: flex;
+  margin-right: 4px;
+}
+.people .avatar {
+  width: 29px;
+  height: 29px;
+  border: 2px solid white;
+  border-radius: 50%;
+  margin-left: -6px;
+  font-size: 10px;
+}
+.btn {
+  padding: 8px 14px;
+  border: 1px solid #dfe5df;
+  background: white;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.btn.soft {
+  background: var(--light);
+  color: var(--green);
+  border-color: transparent;
+}

@@ -1,0 +1,153 @@
+/* chat styles */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 304px;
+  flex: 1;
+  min-height: 0;
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: white;
+}
+.room-bar {
+  padding: 15px 30px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.room-bar strong {
+  color: var(--green);
+  font-size: 12px;
+}
+.online {
+  width: 6px;
+  height: 6px;
+  background: #78a981;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
+.messages {
+  flex: 1;
+  overflow: auto;
+  padding: 26px 32px;
+  scroll-behavior: smooth;
+}
+.date-divider {
+  text-align: center;
+  color: #95a097;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  margin: 0 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.date-divider:before,
+.date-divider:after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+.message {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+.message-body {
+  max-width: 90%;
+  min-width: 0;
+}
+.who {
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.lang {
+  font-size: 9px;
+  color: #879087;
+  font-weight: 400;
+  background: #f5f6f3;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.time {
+  font-size: 10px;
+  color: #a4aaa3;
+  font-weight: 400;
+}
+.bubble {
+  background: #f4f6f2;
+  border: 1px solid #edf0e9;
+  padding: 12px 16px;
+  border-radius: 0 12px 12px;
+  font-size: 13px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.message.mine .bubble {
+  background: #eaf3ed;
+  border-color: #dceadf;
+}
+.original {
+  font-size: 11px;
+  color: #879087;
+  background: #fafbf8;
+  border-left: 2px solid #dce4d8;
+  margin-top: 8px;
+  padding: 8px 12px;
+}
+.link {
+  padding: 5px 0;
+  color: #849482;
+  font-size: 10px;
+}
+.meaning {
+  color: var(--green);
+  font-size: 11px;
+  margin-top: 7px;
+}
+.composer {
+  padding: 17px 30px 21px;
+}
+.compose-box {
+  border: 1px solid #dce4d9;
+  border-radius: 11px;
+  padding: 13px 15px;
+  box-shadow: 0 4px 14px #243e3204;
+}
+.compose-box textarea {
+  border: 0;
+  width: 100%;
+  resize: none;
+  outline: none;
+  font-size: 13px;
+  background: transparent;
+  height: 48px;
+  color: var(--ink);
+}
+.compose-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #a0a99c;
+  font-size: 11px;
+}
+.hint {
+  margin-top: 9px;
+  color: #96a08f;
+  font-size: 10px;
+  display: flex;
+  justify-content: space-between;
+}
