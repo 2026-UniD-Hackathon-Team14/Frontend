@@ -9,7 +9,11 @@ function agreementMembers() {
 }
 function agreementComplete(card) {
   const members = agreementMembers();
-  return members.length > 0 && members.every((member) => card.confirmedIds.includes(member.id));
+  return (
+    members.length > 0 &&
+    members.every((member) => card.confirmedIds.includes(member.id)) &&
+    !(typeof receiptCardDisputed === "function" && receiptCardDisputed(card))
+  );
 }
 function agreementName(id) {
   return agreementMembers().find((member) => member.id === id)?.name || t("unknownMember");
@@ -65,6 +69,7 @@ function renderAgreementViewer() {
   $("#create-card").disabled = !activeWorkspace();
 }
 function renderBoard() {
+  if (typeof refreshWorkspaceTools === "function") refreshWorkspaceTools();
   renderAgreementViewer();
   const confirmed = agreementCards().filter(agreementComplete);
   const visible = confirmed.filter((c) => boardFilter === "전체" || c.type === boardFilter);
@@ -170,6 +175,10 @@ function initBoard() {
     const confirm = event.target.closest("button[data-confirm-agreement]");
     if (confirm) {
       const card = agreementCards().find((item) => item.id === confirm.dataset.confirmAgreement);
+      if (card && typeof receiptCardDisputed === "function" && receiptCardDisputed(card)) {
+        toast("tools.blocked");
+        return;
+      }
       if (
         !card ||
         !agreementMembers().some((member) => member.id === agreementViewer) ||

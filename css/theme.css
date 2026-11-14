@@ -101,9 +101,41 @@ h1 {
 }
 .room-actions .agreement-create,
 .room-actions .agreement-create:disabled {
-  color: var(--color-primary);
-  background: #fff;
-  border-color: var(--color-border-strong);
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.room-bar .room-actions {
+  width: auto;
+  margin-left: auto;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.room-actions .agreement-create,
+.room-actions #end-meeting {
+  min-height: 36px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.composer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+}
+.composer-meta .agreement-viewer-label { font-size: 10px; gap: 5px; }
+.composer-meta .agreement-viewer-label select {
+  padding: 2px 5px;
+  min-height: 24px;
+  font-size: 10px;
+  border-radius: 5px;
 }
 .leave-button {
   color: var(--coral-600);
