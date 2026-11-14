@@ -1,0 +1,9 @@
+/* 스타일 진입점: 아래 순서는 기존 스타일 우선순위를 유지합니다. */
+@import url("./css/base.css");
+@import url("./css/sidebar.css");
+@import url("./css/avatars.css");
+@import url("./css/header.css");
+@import url("./css/chat.css");
+@import url("./css/board.css");
+@import url("./css/dialog.css");
+@import url("./css/responsive.css");

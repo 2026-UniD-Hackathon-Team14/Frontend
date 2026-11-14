@@ -1,0 +1,52 @@
+/* base styles */
+:root {
+  --ink: #263c38;
+  --muted: #81908a;
+  --green: #247463;
+  --light: #eaf3ee;
+  --line: #e7ebe6;
+  --paper: #fafbf8;
+  --orange: #b9823c;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    14px/1.6 "Segoe UI",
+    "Malgun Gothic",
+    sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button,
+a,
+input,
+textarea,
+select {
+  outline-offset: 4px;
+}
+button {
+  color: inherit;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+button {
+  border: 0;
+  background: none;
+}
+button:hover {
+  filter: brightness(0.95);
+}

@@ -1,0 +1,25 @@
+/* avatars styles */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 35px;
+  height: 35px;
+  border-radius: 12px;
+  background: #dce8da;
+  font-size: 12px;
+  font-weight: 700;
+  color: #53694c;
+}
+.avatar.lena {
+  background: #eae2f1;
+  color: #9275a5;
+}
+.avatar.linh {
+  background: #f2e8d6;
+  color: #ad8c4f;
+}
+.avatar.me {
+  background: var(--green);
+  color: white;
+}

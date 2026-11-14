@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모아 · 다국어 팀플 협업</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="side" id="sidebar">
+        <div class="logo">
+          <span class="mark">↗</span>모아<span class="detail-style-1">MOA</span>
+        </div>
+        <div class="tagline">다른 언어, 같은 마음으로.</div>
+        <div class="workspace">
+          <span class="square">3</span>
+          <div>
+            <strong class="detail-style-2">경영정보시스템</strong
+            ><small>2026 · 1학기 팀 프로젝트</small>
+          </div>
+        </div>
+        <div class="nav-label">WORKSPACE</div>
+        <button class="nav-btn active" data-channel="자료조사" aria-current="page">
+          <span class="nav-icon">#</span>자료조사
+        </button>
+        <div class="side-bottom">
+          <div class="profile">
+            <span class="avatar me">민</span>
+            <div>
+              <strong class="detail-style-3">김민준</strong
+              ><small><span class="online"></span>한국어 · 온라인</small>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <main class="main">
+        <header class="top">
+          <button class="mobile-toggle" id="menu" aria-label="메뉴 열기" aria-expanded="false">
+            ☰
+          </button>
+          <div>
+            <div class="breadcrumb">내 워크스페이스 / 3조</div>
+            <h1 id="page-title">함께 만드는, 우리 팀 프로젝트</h1>
+          </div>
+        </header>
+        <div class="layout" id="chat-view">
+          <section class="content">
+            <div class="room-bar">
+              <strong id="room-title"># 자료조사</strong>
+              <div class="room-members">
+                <span><span class="online"></span>팀원 4명</span>
+                <div class="people" aria-label="팀원: 민준, Lena, 서연, Linh">
+                  <span class="avatar me" title="민준">민</span>
+                  <span class="avatar lena" title="Lena">L</span>
+                  <span class="avatar" title="서연">서</span>
+                  <span class="avatar linh" title="Linh">Li</span>
+                </div>
+              </div>
+              <div class="room-actions">
+                <button
+                  class="btn agreement-create"
+                  id="create-card"
+                  type="button"
+                  title="합의 카드 생성 기능은 준비 중이에요"
+                  disabled
+                >
+                  합의 카드 만들기
+                </button>
+                <span class="room-language">◎ 한국어로 보는 중</span>
+              </div>
+            </div>
+            <div class="messages" id="messages" role="log" aria-label="팀 채팅"></div>
+            <form class="composer" id="message-form">
+              <div class="compose-box">
+                <textarea
+                  id="message-input"
+                  aria-label="메시지 입력"
+                  placeholder="어떤 생각이든 편하게 나눠 보세요."
+                  required
+                ></textarea>
+                <div class="compose-bottom">
+                  <button type="button" class="link" id="sample">✧ ‘생각해볼게요’ 예시 체험</button
+                  ><button class="btn primary" id="send">보내기 ↑</button>
+                </div>
+              </div>
+              <div class="hint">
+                <span>◎ Lena는 English, Linh은 Tiếng Việt로 읽어요.</span
+                ><span>Enter 전송 · Shift + Enter 줄바꿈</span>
+              </div>
+            </form>
+          </section>
+          <aside class="board">
+            <div class="eyebrow">ON THE SAME PAGE</div>
+            <div class="board-title">
+              <h2>우리 팀 합의 보드</h2>
+              <span class="counter" id="board-count">0</span>
+            </div>
+            <div class="filters" role="group" aria-label="합의 종류">
+              <button class="filter active" data-filter="전체">전체</button
+              ><button class="filter" data-filter="약속">약속</button
+              ><button class="filter" data-filter="규칙">규칙</button
+              ><button class="filter" data-filter="공지">공지</button>
+            </div>
+            <div id="board-cards"><p class="empty">아직 등록된 합의가 없어요.</p></div>
+
+            <div class="board-footer">
+              <strong>작은 확인이, 큰 오해를 줄이니까.</strong>팀원 모두가 확인한 약속만 이곳에
+              모여요.<br />서로 같은 뜻으로 이해했는지 함께 확인해요.
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+    <dialog id="meaning-dialog">
+      <div class="modal-title">
+        <h2>잠깐, 어떤 뜻인가요?</h2>
+        <button class="close" aria-label="닫기">✕</button>
+      </div>
+      <p>
+        ‘생각해볼게요’는 언어와 문화에 따라 다르게 읽힐 수 있어요. 전달하고 싶은 뜻을 골라 주세요.
+      </p>
+      <div class="warning" id="pending-text"></div>
+      <button class="option" data-meaning="아직 결정하지 않았어요">
+        ① 아직 결정하지 않았어요<small
+          >I haven't decided on that part yet — I'll think it over.</small
+        ></button
+      ><button class="option" data-meaning="정중하게 거절하는 뜻이에요">
+        ② 정중하게 거절하는 뜻이에요<small>I don't think I can take that part on, sorry.</small>
+      </button>
+      <form id="custom-meaning">
+        <label class="field"
+          >③ 다른 뜻이에요<input
+            id="custom-text"
+            placeholder="예: 오늘 밤까지 결정해서 답할게요"
+            required
+            maxlength="300"
+        /></label>
+        <div class="actions">
+          <button class="btn soft">이 뜻으로 보내기</button
+          ><button type="button" class="btn" id="send-original">원문 그대로 보내기</button>
+        </div>
+      </form>
+      <p>예시 표현만 감지하는 데모입니다. 실제 AI 번역은 연결되지 않았어요.</p>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+    <!-- 공통 도구와 상태 → 기능 → 앱 초기화 순으로 실행합니다. -->
+    <script src="./js/utils.js"></script>
+    <script src="./js/state.js"></script>
+    <script src="./js/toast.js"></script>
+    <script src="./js/chat.js"></script>
+    <script src="./js/meaning.js"></script>
+    <script src="./js/sidebar.js"></script>
+    <script src="./js/board.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>
