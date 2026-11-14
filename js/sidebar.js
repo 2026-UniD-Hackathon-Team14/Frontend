@@ -68,6 +68,7 @@ function selectWorkspace(id) {
   agreementViewer = currentUser.id;
   $("#message-input").value = "";
   boardFilter = "전체";
+  if (typeof showWorkspaceTool === "function") showWorkspaceTool("chat");
   renderWorkspaces();
   renderMessages();
   renderBoard();

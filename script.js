@@ -7,3 +7,4 @@ initChat();
 initInvitations();
 
 initWorkspaceLeave();
+initWorkspaceTools();

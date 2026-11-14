@@ -1,4 +1,4 @@
-// 로컬 저장 어댑터. 서버 연동 시 이 계층을 API 호출로 교체합니다.
+// 페이지를 열어 둔 동안만 데이터를 유지합니다.
 const STORAGE_KEY = "nunchichat.workspaces.v1";
 const currentUser = { id: "me", name: "민준", language: "ko" };
 function newId(prefix) {
@@ -32,26 +32,8 @@ function defaultState() {
   };
 }
 function loadState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (
-      saved?.version === 1 &&
-      Array.isArray(saved.workspaces) &&
-      saved.workspaces.every(
-        (w) =>
-          typeof w.id === "string" &&
-          typeof w.name === "string" &&
-          [w.members, w.messages, w.cards, w.invitations].every(Array.isArray) &&
-          w.members.some((m) => m.id === currentUser.id),
-      )
-    ) {
-      if (!saved.workspaces.some((w) => w.id === saved.activeId))
-        saved.activeId = saved.workspaces[0]?.id || null;
-      return saved;
-    }
-  } catch {
-    /* 저장소 접근 불가 또는 손상된 데이터일 때 기본 화면으로 시작합니다. */
-  }
+  // 이전 버전이 저장한 워크스페이스 기록도 더 이상 사용하지 않습니다.
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
   return defaultState();
 }
 const appState = loadState();
@@ -64,11 +46,6 @@ function activeWorkspace() {
   return appState.workspaces.find((w) => w.id === appState.activeId);
 }
 function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-    return true;
-  } catch {
-    toast("브라우저에 저장하지 못했어요. 이번 화면에서만 유지됩니다.");
-    return false;
-  }
+  // 기존 기능의 호출 지점은 유지하되 브라우저 저장소에는 쓰지 않습니다.
+  return true;
 }
