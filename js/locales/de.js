@@ -273,8 +273,7 @@ window.NunchiLocales.de = {
   "api.memberHelp":
     "Gib die registrierte Benutzer-ID deines Freundes ein. E-Mail-Einladungen werden noch nicht unterstützt.",
   "api.memberAdded": "Mitglied hinzugefügt.",
-  "api.meaningHelp":
-    "Diese Ausdrücke und Absichten stammen vom Server. Wähle eine Absicht für die gesamte Nachricht oder sende das Original.",
+  "api.meaningHelp": "Wähle die Bedeutung jedes Ausdrucks. Andere Bedeutungen kannst du selbst eingeben.",
   "api.receiptId": "Beleg-ID",
   "api.receiptEmpty":
     "Noch keine Zwischenabrechnung. Erstelle eine aus bestätigten Board-Karten.",
@@ -315,4 +314,23 @@ window.NunchiLocales.de = {
   "api.receiptNotCreated": "Beleg-ID: noch nicht erstellt",
   "api.receiptUnlinked": "Beleg-ID: wird geprüft",
   "api.settlementBlockedByObjection": "Ein früherer Beleg enthält einen offenen Einwand. Keine neue Abrechnung erstellt. Kläre den Einwand und versuche es erneut.",
+  "review.object": "Einwand",
+  "review.reason": "Dein Anliegen oder Verständnis",
+  "review.placeholder": "Was soll geändert werden? Oder beschreibe, wie du die Vereinbarung verstanden hast.",
+  "review.warning": "Mit dem Absenden wird diese Karte endgültig verworfen.",
+  "review.submit": "Einwand absenden",
+  "review.rejected": "Diese Karte wurde verworfen.",
+  "review.recreate": "Für eine neue Einigung muss eine neue Karte erstellt werden.",
+  "review.closed": "Diese Karte ist bereits bestätigt oder verworfen. Bitte aktualisieren.",
+  "review.unavailable": "Karteneinwände und endgültige Abrechnungen benötigen ein Backend-Update. Es wurde nichts übermittelt oder abgerechnet.",
+  "review.notFinal": "Der Server hat einen offenen Beleg zurückgegeben. Die automatische Bestätigung benötigt ein Backend-Update.",
+  "multi.selected": "Ausgewählt",
+  "multi.select": "Auswählen",
+  "multi.custom": "Deine beabsichtigte Bedeutung",
+  "multi.placeholder": "Beschreibe, was du meinst.",
+  "multi.progress": "{count}/{total} Ausdrücke ausgefüllt",
+  "multi.preview": "Nachrichtenvorschau",
+  "multi.compatibility": "Deine Bedeutungen werden unter der ursprünglichen Nachricht ergänzt.",
+  "multi.help": "Wähle für jeden Ausdruck eine Bedeutung und sende anschließend.",
+  "multi.send": "Ausgewählte Bedeutungen senden",
 };

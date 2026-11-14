@@ -272,8 +272,7 @@ window.NunchiLocales.en = {
   "api.memberHelp":
     "Enter your friend’s registered user ID. Email invitations are not supported yet.",
   "api.memberAdded": "Member added.",
-  "api.meaningHelp":
-    "These expressions and intents were returned by the server. Choose one intent for the whole message or send the original.",
+  "api.meaningHelp": "Choose a meaning for each expression. For another meaning, enter your own explanation.",
   "api.receiptId": "Receipt ID",
   "api.receiptEmpty":
     "No interim summaries yet. Create one from confirmed board cards.",
@@ -314,4 +313,23 @@ window.NunchiLocales.en = {
   "api.receiptNotCreated": "Receipt ID: not created",
   "api.receiptUnlinked": "Receipt ID: checking",
   "api.settlementBlockedByObjection": "An earlier receipt has an unresolved objection. No new settlement was created. Resolve the objection and try again.",
+  "review.object": "Object",
+  "review.reason": "Your request or understanding",
+  "review.placeholder": "What should change? Or explain how you understood this agreement.",
+  "review.warning": "Submitting cancels this card permanently.",
+  "review.submit": "Submit objection",
+  "review.rejected": "This card has been rejected.",
+  "review.recreate": "Create a new card to agree again.",
+  "review.closed": "This card is already confirmed or rejected. Refresh its status.",
+  "review.unavailable": "Card objections and final settlement require a backend update. Nothing has been submitted or settled.",
+  "review.notFinal": "The server returned a pending receipt. Automatic finalization needs a backend update.",
+  "multi.selected": "Selected",
+  "multi.select": "Select",
+  "multi.custom": "Your intended meaning",
+  "multi.placeholder": "Explain what you mean.",
+  "multi.progress": "{count}/{total} expressions completed",
+  "multi.preview": "Message preview",
+  "multi.compatibility": "Your meanings will be appended below the original message.",
+  "multi.help": "Choose a meaning for every expression, then send.",
+  "multi.send": "Send selected meanings",
 };

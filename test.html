@@ -10,18 +10,27 @@
     <link rel="stylesheet" href="./css/i18n.css" />
     <link rel="stylesheet" href="./css/api.css" />
     <link rel="stylesheet" href="./css/meaning-sheet.css" />
+    <link rel="stylesheet" href="./css/main-layout.css" />
+    <link rel="stylesheet" href="./css/card-review.css" />
   </head>
   <body data-page="main">
     <div id="api-error" class="api-error" role="alert" hidden>
-      <span></span><button type="button" id="retry-api" data-i18n="api.refresh"></button
-      ><button type="button" id="dismiss-error" data-i18n-aria-label="close">✕</button>
+      <span></span
+      ><button type="button" id="retry-api" data-i18n="api.refresh"></button
+      ><button type="button" id="dismiss-error" data-i18n-aria-label="close">
+        ✕
+      </button>
     </div>
     <div class="shell">
       <aside class="side" id="sidebar">
         <div class="logo">
-          <span class="brand-logo"><img src="./assets/brand/logo-light.png" alt="눈치Chat" /></span>
+          <span class="brand-logo"
+            ><img src="./assets/brand/logo-current.png" alt="눈치Chat"
+          /></span>
         </div>
-        <div class="tagline"><span data-i18n="tagline">다른 언어, 같은 마음으로.</span></div>
+        <div class="tagline">
+          <span data-i18n="tagline">다른 언어, 같은 마음으로.</span>
+        </div>
         <div class="workspace-label">
           <span><span data-i18n="workspaces">WORKSPACE</span></span
           ><button
@@ -40,8 +49,14 @@
           aria-label="워크스페이스 목록"
           data-i18n-aria-label="workspaceList"
         ></nav>
-        <nav class="tool-nav" aria-label="일정 및 회의 도구" data-i18n-aria-label="tools.tools">
-          <div class="nav-label"><span data-i18n="tools.nav">회의 · 일정</span></div>
+        <nav
+          class="tool-nav"
+          aria-label="일정 및 회의 도구"
+          data-i18n-aria-label="tools.tools"
+        >
+          <div class="nav-label">
+            <span data-i18n="tools.nav">회의 · 일정</span>
+          </div>
           <button type="button" class="nav-btn" data-tool-view="chat">
             <span data-i18n="tools.chat">채팅</span>
           </button>
@@ -56,56 +71,68 @@
           </button>
         </nav>
         <div class="side-bottom">
-          <div class="profile">
+          <div class="profile-menu" id="profile-menu" hidden>
+            <label class="ui-language"
+              ><span data-i18n="uiLanguage"></span
+              ><select
+                id="ui-language"
+                data-language-select
+                aria-label="화면 언어"
+                data-i18n-aria-label="uiLanguage"
+              >
+                <option value="ko">한국어</option>
+                <option value="en">English</option>
+                <option value="vi">Tiếng Việt</option>
+                <option value="de">Deutsch</option>
+              </select></label
+            >
+            <button type="button" class="btn leave-button" id="logout">
+              <span data-i18n="api.logout">워크스페이스 나가기</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            class="profile"
+            id="profile-toggle"
+            aria-expanded="false"
+            aria-controls="profile-menu"
+          >
             <span class="avatar me" id="profile-avatar"></span>
             <div>
               <strong class="detail-style-3" id="profile-name"></strong
               ><small id="profile-language"></small>
             </div>
-          </div>
+            <span class="profile-chevron" aria-hidden="true">&#8963;</span>
+          </button>
         </div>
       </aside>
       <main class="main">
-        <header class="top">
-          <button
-            class="mobile-toggle"
-            id="menu"
-            aria-label="메뉴 열기"
-            data-i18n-aria-label="menu"
-            aria-expanded="false"
-          >
-            ☰
-          </button>
-          <div>
-            <div class="breadcrumb" id="breadcrumb">내 워크스페이스 / 3조</div>
-            <h1 id="page-title">함께 만드는, 우리 팀 프로젝트</h1>
-          </div>
-          <label class="ui-language"
-            ><span data-i18n="uiLanguage"></span
-            ><select
-              id="ui-language"
-              data-language-select
-              aria-label="화면 언어"
-              data-i18n-aria-label="uiLanguage"
-            >
-              <option value="ko">한국어</option>
-              <option value="en">English</option>
-              <option value="vi">Tiếng Việt</option>
-              <option value="de">Deutsch</option>
-            </select></label
-          >
-          <button type="button" class="btn leave-button" id="logout">
-            <span data-i18n="api.logout">워크스페이스 나가기</span>
-          </button>
-        </header>
         <div class="layout" id="chat-view">
           <section class="content">
-            <div class="room-bar">
-              <strong id="room-title"># 자료조사</strong>
+            <header class="top">
+              <button
+                class="mobile-toggle"
+                id="menu"
+                aria-label="메뉴 열기"
+                data-i18n-aria-label="menu"
+                aria-expanded="false"
+              >
+                ☰
+              </button>
+              <div>
+                <div class="breadcrumb" id="breadcrumb">
+                  내 워크스페이스 / 3조
+                </div>
+                <h1 id="page-title">함께 만드는, 우리 팀 프로젝트</h1>
+              </div>
               <div class="room-members">
                 <span id="member-count">팀원 4명</span>
                 <div class="people" id="member-avatars"></div>
-                <button type="button" class="btn invite-button" id="invite-friends">
+                <button
+                  type="button"
+                  class="btn invite-button"
+                  id="invite-friends"
+                >
                   <span data-i18n="inviteFriends">＋ 친구 초대</span>
                 </button>
               </div>
@@ -119,7 +146,11 @@
                 >
                   <span data-i18n="createCard">합의 카드 만들기</span>
                 </button>
-                <button type="button" class="btn primary" id="settle-agreements">
+                <button
+                  type="button"
+                  class="btn primary"
+                  id="settle-agreements"
+                >
                   <span data-i18n="tools.settle">중간 결산</span>
                 </button>
                 <button
@@ -131,7 +162,8 @@
                   data-i18n="roomLeave.button"
                 ></button>
               </div>
-            </div>
+              <span id="room-title" hidden></span>
+            </header>
             <div
               class="messages"
               id="messages"
@@ -139,11 +171,19 @@
               aria-label="팀 채팅"
               data-i18n-aria-label="chatLabel"
             ></div>
-            <dialog id="meaning-dialog" class="meaning-sheet" aria-labelledby="meaning-title">
+            <dialog
+              id="meaning-dialog"
+              class="meaning-sheet"
+              aria-labelledby="meaning-title"
+            >
               <div class="sheet-grip" aria-hidden="true"></div>
               <header class="meaning-sheet-header">
                 <span class="sheet-eyebrow" data-i18n="sheet.before"></span
-                ><button type="button" id="close-meaning" data-i18n-aria-label="sheet.edit">
+                ><button
+                  type="button"
+                  id="close-meaning"
+                  data-i18n-aria-label="sheet.edit"
+                >
                   ✕
                 </button>
               </header>
@@ -151,14 +191,39 @@
               <p class="sheet-description" data-i18n="api.meaningHelp"></p>
               <div id="pending-text" class="sheet-quote"></div>
               <div id="meaning-options"></div>
-              <p id="meaning-error" class="api-inline-error" role="alert" hidden></p>
+              <div id="meaning-preview" hidden>
+                <strong data-i18n="multi.preview"></strong>
+                <p data-i18n="multi.help"></p>
+                <pre id="meaning-preview-text"></pre>
+              </div>
+              <p id="meaning-progress" role="status"></p>
+              <p
+                id="meaning-error"
+                class="api-inline-error"
+                role="alert"
+                hidden
+              ></p>
+              <button
+                type="button"
+                class="btn"
+                id="reanalyze-meaning"
+                data-i18n="api.refresh"
+                hidden
+              ></button>
               <footer class="meaning-sheet-footer">
-                <span data-i18n="sheet.choose"></span
+                <span data-i18n="multi.help"></span
                 ><button
                   type="button"
                   class="btn"
                   id="send-original"
                   data-i18n="sendOriginal"
+                ></button>
+                <button
+                  type="button"
+                  class="btn primary"
+                  id="send-meanings"
+                  data-i18n="multi.send"
+                  disabled
                 ></button>
               </footer>
             </dialog>
@@ -183,19 +248,24 @@
                 <span class="room-language" id="viewing-language"></span>
               </div>
               <div class="hint">
-                <span id="translation-hint"></span><span data-i18n="shortcut"></span>
+                <span id="translation-hint"></span
+                ><span data-i18n="shortcut"></span>
               </div>
             </form>
           </section>
           <aside class="board">
-            <div class="eyebrow"><span data-i18n="boardEyebrow">ON THE SAME PAGE</span></div>
+            <div class="eyebrow">
+              <span data-i18n="boardEyebrow">ON THE SAME PAGE</span>
+            </div>
             <div class="board-title">
               <h2><span data-i18n="boardTitle">우리 팀 합의 보드</span></h2>
               <span class="counter" id="board-count">0</span>
             </div>
 
             <div id="board-cards">
-              <p class="empty"><span data-i18n="boardEmpty">아직 등록된 합의가 없어요.</span></p>
+              <p class="empty">
+                <span data-i18n="boardEmpty">아직 등록된 합의가 없어요.</span>
+              </p>
             </div>
           </aside>
         </div>
@@ -213,13 +283,22 @@
 
     <dialog id="workspace-dialog" aria-labelledby="workspace-dialog-title">
       <div class="modal-title">
-        <h2 id="workspace-dialog-title"><span data-i18n="workspaceTitle">새 워크스페이스</span></h2>
-        <button type="button" class="close" aria-label="닫기" data-i18n-aria-label="close">
+        <h2 id="workspace-dialog-title">
+          <span data-i18n="workspaceTitle">새 워크스페이스</span>
+        </h2>
+        <button
+          type="button"
+          class="close"
+          aria-label="닫기"
+          data-i18n-aria-label="close"
+        >
           ✕
         </button>
       </div>
       <p>
-        <span data-i18n="workspaceIntro">함께 이야기하고 약속을 정할 공간을 만들어 보세요.</span>
+        <span data-i18n="workspaceIntro"
+          >함께 이야기하고 약속을 정할 공간을 만들어 보세요.</span
+        >
       </p>
       <form id="workspace-form">
         <label class="field"
@@ -236,7 +315,8 @@
           <span data-i18n="api.roomStorage"></span>
         </p>
         <div class="actions modal-actions">
-          <button type="button" class="btn close"><span data-i18n="cancel">취소</span></button
+          <button type="button" class="btn close">
+            <span data-i18n="cancel">취소</span></button
           ><button class="btn primary" type="submit">
             <span data-i18n="createAndOpen">만들고 이동하기</span>
           </button>
@@ -246,7 +326,11 @@
       <form id="join-room-form">
         <label class="field"
           ><span data-i18n="api.roomId"></span
-          ><input id="join-room-id" inputmode="numeric" pattern="[0-9]+" required
+          ><input
+            id="join-room-id"
+            inputmode="numeric"
+            pattern="[0-9]+"
+            required
         /></label>
         <p data-i18n="api.joinHelp"></p>
         <button type="submit" class="btn" data-i18n="api.join"></button>
@@ -255,20 +339,31 @@
     <dialog id="invite-dialog" aria-labelledby="invite-dialog-title">
       <div class="modal-title">
         <h2 id="invite-dialog-title" data-i18n="api.addMember"></h2>
-        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
+        <button type="button" class="close" data-i18n-aria-label="close">
+          ✕
+        </button>
       </div>
       <p>
-        <strong id="invite-workspace-name"></strong> · <span data-i18n="api.roomId"></span>
+        <strong id="invite-workspace-name"></strong> ·
+        <span data-i18n="api.roomId"></span>
         <strong id="invite-room-id"></strong>
       </p>
       <p data-i18n="api.memberHelp"></p>
       <form id="invite-form">
         <label class="field"
           ><span data-i18n="api.userId"></span
-          ><input id="invite-user-id" inputmode="numeric" pattern="[0-9]+" required
+          ><input
+            id="invite-user-id"
+            inputmode="numeric"
+            pattern="[0-9]+"
+            required
         /></label>
         <div class="actions">
-          <button type="submit" class="btn primary" data-i18n="api.addMember"></button>
+          <button
+            type="submit"
+            class="btn primary"
+            data-i18n="api.addMember"
+          ></button>
         </div>
       </form>
       <h3 data-i18n="api.members"></h3>
@@ -291,16 +386,27 @@
             ><span data-i18n="assignee"></span
             ><select id="agreement-assignee" required></select></label
           ><label class="field"
-            ><span data-i18n="dueDate"></span><input id="agreement-date" type="date"
+            ><span data-i18n="dueDate"></span
+            ><input id="agreement-date" type="date"
           /></label>
         </div>
         <div class="agreement-preview" aria-live="polite">
-          <small data-i18n="previewCard"></small><strong id="agreement-preview-title"></strong
+          <small data-i18n="previewCard"></small
+          ><strong id="agreement-preview-title"></strong
           ><small data-i18n="api.serverCard"></small>
         </div>
         <div class="actions agreement-actions">
-          <button type="button" class="btn" id="agreement-cancel" data-i18n="cancel"></button
-          ><button class="btn primary" type="submit" data-i18n="postCard"></button>
+          <button
+            type="button"
+            class="btn"
+            id="agreement-cancel"
+            data-i18n="cancel"
+          ></button
+          ><button
+            class="btn primary"
+            type="submit"
+            data-i18n="postCard"
+          ></button>
         </div>
       </form>
     </dialog>
@@ -311,12 +417,19 @@
     >
       <div class="modal-title">
         <h2 id="leave-room-title" data-i18n="roomLeave.title"></h2>
-        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
+        <button type="button" class="close" data-i18n-aria-label="close">
+          ✕
+        </button>
       </div>
       <p id="leave-room-name"></p>
       <p id="leave-room-description" data-i18n="roomLeave.description"></p>
       <div class="actions modal-actions">
-        <button type="button" class="btn close" autofocus data-i18n="cancel"></button
+        <button
+          type="button"
+          class="btn close"
+          autofocus
+          data-i18n="cancel"
+        ></button
         ><button
           type="button"
           class="btn room-leave"

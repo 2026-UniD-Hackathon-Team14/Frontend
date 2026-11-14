@@ -273,8 +273,7 @@ window.NunchiLocales.ko = {
   "api.memberHelp":
     "친구가 가입한 뒤 발급받은 사용자 ID를 입력하세요. 이메일 초대는 아직 지원되지 않습니다.",
   "api.memberAdded": "팀원을 추가했어요.",
-  "api.meaningHelp":
-    "서버가 찾은 표현과 의도 후보입니다. 이 메시지 전체에 전달할 뜻 하나를 선택하거나 원문 그대로 보내세요.",
+  "api.meaningHelp": "표현별로 뜻을 선택해 주세요. 다른 뜻은 직접 입력할 수 있습니다.",
   "api.receiptId": "영수증 ID",
   "api.receiptEmpty":
     "아직 중간결산 기록이 없어요. 합의 보드에서 모두 확인한 카드를 중간결산으로 모아 보세요.",
@@ -315,4 +314,23 @@ window.NunchiLocales.ko = {
   "api.receiptNotCreated": "영수증 ID: 미생성",
   "api.receiptUnlinked": "영수증 ID: 확인 중",
   "api.settlementBlockedByObjection": "이전 영수증에 이의가 남은 카드가 있어 새 결산을 만들지 않았어요. 이의를 해결한 뒤 다시 시도해 주세요.",
+  "review.object": "이의제기",
+  "review.reason": "요청 사항 또는 내가 이해한 내용",
+  "review.placeholder": "어떤 점을 바꾸길 원하나요? 또는 어떻게 이해했는지 적어 주세요.",
+  "review.warning": "제출하면 이 카드는 무산되며 다시 확인할 수 없습니다.",
+  "review.submit": "이의제기 제출",
+  "review.rejected": "이 카드는 무산되었습니다.",
+  "review.recreate": "다시 카드를 만드셔야 합니다.",
+  "review.closed": "이미 확정되었거나 무산된 카드입니다. 최신 상태를 확인해 주세요.",
+  "review.unavailable": "카드 이의제기와 즉시 확정 결산은 백엔드 변경 후 사용할 수 있습니다. 아직 제출되거나 결산되지 않았습니다.",
+  "review.notFinal": "서버가 미확정 영수증을 반환했습니다. 즉시 확정 처리를 백엔드에서 적용해야 합니다.",
+  "multi.selected": "선택됨",
+  "multi.select": "선택",
+  "multi.custom": "전달하려는 뜻",
+  "multi.placeholder": "어떤 뜻인지 직접 입력해 주세요.",
+  "multi.progress": "{count}/{total}개 표현 선택 완료",
+  "multi.preview": "전송 미리보기",
+  "multi.compatibility": "선택한 뜻을 원문 아래 설명으로 덧붙여 보냅니다.",
+  "multi.help": "모든 표현의 뜻을 선택한 뒤 전송해 주세요.",
+  "multi.send": "선택한 뜻으로 전송",
 };
