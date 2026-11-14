@@ -7,7 +7,7 @@ window.I18n = (() => {
   let language = "ko";
   try {
     const stored = localStorage.getItem(storageKey);
-    const user = JSON.parse(localStorage.getItem("nunchichat.user"));
+    const user = JSON.parse(localStorage.getItem("nunchichat.server-user.v1"));
     language = supported.includes(stored)
       ? stored
       : supported.includes(user?.language)

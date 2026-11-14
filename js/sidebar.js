@@ -8,12 +8,13 @@ function renderWorkspaces() {
     </button>`,
     )
     .join("");
+  $("#create-workspace").disabled = !ready;
   const workspace = activeWorkspace();
-  const hasWorkspace = Boolean(workspace);
-  $("#leave-workspace").disabled = !hasWorkspace;
+  const hasWorkspace = Boolean(workspace) && ready;
+
   $("#invite-friends").disabled = !hasWorkspace;
   $("#message-input").disabled = !hasWorkspace;
-  $("#send").disabled = !hasWorkspace;
+  $("#send").disabled = !hasWorkspace || busy;
   $("#message-input").placeholder = hasWorkspace ? t("messagePlaceholder") : t("createFirst");
   $("#room-title").textContent = hasWorkspace ? "# " + workspace.name : t("noWorkspace");
   $("#breadcrumb").textContent = workspace
@@ -39,80 +40,85 @@ function renderMembers() {
       : t("noMembers"),
   );
   $("#translation-hint").textContent = workspace
-    ? t("languageHint", {
+    ? t("api.memberLanguages", {
         languages: [...new Set(members.map((m) => I18n.names[m.language] || m.language))].join(
           " · ",
         ),
       })
     : t("createHint");
 }
-function selectWorkspace(id) {
-  if (busy) {
+
+async function openRoom(id, { join = false } = {}) {
+  id = String(API.id(id));
+  let data = await API.request("/rooms/" + id);
+  if (!(data.members || []).some((m) => String(m.id) === currentUser.id)) {
+    if (!join) throw new Error("api.notMember");
+    await API.request("/rooms/" + id + "/members", {
+      method: "POST",
+      body: { userId: API.id(currentUser.id) },
+    });
+    data = await API.request("/rooms/" + id);
+  }
+  if (!appState.workspaces.some((w) => w.id === id)) appState.workspaces.push(serverRoom(data));
+  rememberRoom(id);
+  await selectWorkspace(id);
+}
+async function selectWorkspace(id) {
+  if (busy || pending) {
     toast("busyMove");
     return;
   }
   if (!appState.workspaces.some((w) => w.id === id)) return;
-  appState.activeId = id;
-  channel = id;
-  pending = "";
-  agreementViewer = currentUser.id;
+  appState.activeId = channel = id;
+  chats[id] = activeWorkspace().messages;
   $("#message-input").value = "";
   boardFilter = "전체";
-  if (typeof showWorkspaceTool === "function") showWorkspaceTool("chat");
-  renderWorkspaces();
-  renderMessages();
-  renderBoard();
+  showWorkspaceTool("chat");
   $("#sidebar").classList.remove("open");
   $("#menu").setAttribute("aria-expanded", "false");
   saveState();
-}
-function createWorkspace(name, description) {
-  const workspace = {
-    id: newId("workspace"),
-    name,
-    description,
-    members: [{ ...currentUser }],
-    messages: [],
-    cards: [],
-    invitations: [],
-  };
-  appState.workspaces.push(workspace);
-  chats[workspace.id] = workspace.messages;
-  selectWorkspace(workspace.id);
-  return workspace;
+  renderApp();
+  RoomSync.connect(id);
+  await refreshRoom();
 }
 function initSidebar() {
   document.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-workspace]");
-    if (button) selectWorkspace(button.dataset.workspace);
+    const button = event.target.closest("[data-workspace]");
+    if (button) runAction(button, () => selectWorkspace(button.dataset.workspace));
   });
-  $("#menu").onclick = () => {
-    const open = $("#sidebar").classList.toggle("open");
-    $("#menu").setAttribute("aria-expanded", String(open));
-  };
+  $("#menu").onclick = () =>
+    $("#menu").setAttribute("aria-expanded", String($("#sidebar").classList.toggle("open")));
   $("#create-workspace").onclick = () => {
-    if (busy) return toast("busyRetry");
-    $("#workspace-form").reset();
-    $("#workspace-name").setCustomValidity("");
+    if (busy || pending) return toast("busyRetry");
+    if (!$("#workspace-form").dataset.createdRoom) $("#workspace-form").reset();
+    $("#join-room-form").reset();
     $("#workspace-dialog").showModal();
   };
-  $("#workspace-name").oninput = () => $("#workspace-name").setCustomValidity("");
   $("#workspace-form").onsubmit = (event) => {
     event.preventDefault();
-    const input = $("#workspace-name");
-    const name = input.value.trim();
-    validationMessage(
-      input,
-      !name
-        ? "workspaceRequired"
-        : appState.workspaces.some((w) => w.name.toLocaleLowerCase() === name.toLocaleLowerCase())
-          ? "workspaceDuplicate"
-          : "",
-    );
-    if (!$("#workspace-form").reportValidity()) return;
-    createWorkspace(name, $("#workspace-summary").value.trim());
-    $("#workspace-dialog").close();
-    toast("workspaceCreated");
+    const form = event.target,
+      name = $("#workspace-name").value.trim();
+    if (!name || !form.reportValidity()) return;
+    runAction(form.querySelector("[type=submit]"), async () => {
+      // Preserve a successfully created room ID if adding its creator fails, so retry cannot create duplicate rooms.
+      let id = form.dataset.createdRoom;
+      if (!id) {
+        const room = await API.request("/rooms", { method: "POST", body: { name } });
+        id = String(room.id);
+        form.dataset.createdRoom = id;
+        rememberRoom(id);
+      }
+      await openRoom(id, { join: true });
+      delete form.dataset.createdRoom;
+      $("#workspace-dialog").close();
+      toast("workspaceCreated");
+    });
   };
-  renderWorkspaces();
+  $("#join-room-form").onsubmit = (event) => {
+    event.preventDefault();
+    runAction(event.target.querySelector("[type=submit]"), async () => {
+      await openRoom($("#join-room-id").value, { join: true });
+      $("#workspace-dialog").close();
+    });
+  };
 }

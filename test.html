@@ -8,8 +8,13 @@
     <link rel="icon" type="image/png" href="./assets/brand/icon.png" />
     <meta name="theme-color" content="#1F3A5F" />
     <link rel="stylesheet" href="./css/i18n.css" />
+    <link rel="stylesheet" href="./css/api.css" />
   </head>
   <body data-page="main">
+    <div id="api-error" class="api-error" role="alert" hidden>
+      <span></span><button type="button" id="retry-api" data-i18n="api.refresh"></button
+      ><button type="button" id="dismiss-error" data-i18n-aria-label="close">✕</button>
+    </div>
     <div class="shell">
       <aside class="side" id="sidebar">
         <div class="logo">
@@ -88,8 +93,8 @@
               <option value="de">Deutsch</option>
             </select></label
           >
-          <button type="button" class="btn leave-button" id="leave-workspace">
-            <span data-i18n="leaveWorkspace">워크스페이스 나가기</span>
+          <button type="button" class="btn leave-button" id="logout">
+            <span data-i18n="api.logout">워크스페이스 나가기</span>
           </button>
         </header>
         <div class="layout" id="chat-view">
@@ -113,7 +118,7 @@
                 >
                   <span data-i18n="createCard">합의 카드 만들기</span>
                 </button>
-                <button type="button" class="btn primary" id="end-meeting">
+                <button type="button" class="btn primary" id="settle-agreements">
                   <span data-i18n="tools.settle">중간 결산</span>
                 </button>
               </div>
@@ -142,19 +147,11 @@
                 </div>
               </div>
               <div class="composer-meta">
+                <span id="connection-status" data-i18n="api.connecting"></span>
                 <span class="room-language" id="viewing-language"></span>
-                <label class="agreement-viewer-label"
-                  ><span data-i18n="viewer"><span data-i18n="tools.viewer">데모 확인자</span></span
-                  ><select
-                    id="agreement-viewer"
-                    aria-label="데모에서 확인할 팀원 선택"
-                    data-i18n-aria-label="viewerLabel"
-                  ></select
-                ></label>
               </div>
               <div class="hint">
-                <span id="translation-hint">로컬 데모 · 팀원 언어</span
-                ><span><span data-i18n="shortcut">Enter 전송 · Shift + Enter 줄바꿈</span></span>
+                <span id="translation-hint"></span><span data-i18n="shortcut"></span>
               </div>
             </form>
           </section>
@@ -164,21 +161,7 @@
               <h2><span data-i18n="boardTitle">우리 팀 합의 보드</span></h2>
               <span class="counter" id="board-count">0</span>
             </div>
-            <div
-              class="filters"
-              role="group"
-              aria-label="합의 종류"
-              data-i18n-aria-label="cardKinds"
-            >
-              <button class="filter active" data-filter="전체">
-                <span data-i18n="all">전체</span></button
-              ><button class="filter" data-filter="약속">
-                <span data-i18n="promise">약속</span></button
-              ><button class="filter" data-filter="규칙"><span data-i18n="rule">규칙</span></button
-              ><button class="filter" data-filter="공지">
-                <span data-i18n="notice">공지</span>
-              </button>
-            </div>
+
             <div id="board-cards">
               <p class="empty"><span data-i18n="boardEmpty">아직 등록된 합의가 없어요.</span></p>
             </div>
@@ -197,43 +180,13 @@
     </div>
     <dialog id="meaning-dialog">
       <div class="modal-title">
-        <h2><span data-i18n="meaningTitle">잠깐, 어떤 뜻인가요?</span></h2>
-        <button class="close" aria-label="닫기" data-i18n-aria-label="close">✕</button>
+        <h2 data-i18n="meaningTitle"></h2>
+        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
       </div>
-      <p>
-        <span data-i18n="meaningDescription"
-          >‘생각해볼게요’는 언어와 문화에 따라 다르게 읽힐 수 있어요. 전달하고 싶은 뜻을 골라
-          주세요.</span
-        >
-      </p>
+      <p data-i18n="api.meaningHelp"></p>
       <div class="warning" id="pending-text"></div>
-      <button class="option" data-meaning="UNDECIDED">
-        <span data-i18n="undecided">① 아직 결정하지 않았어요</span></button
-      ><button class="option" data-meaning="REJECT">
-        <span data-i18n="reject">② 정중하게 거절하는 뜻이에요</span>
-      </button>
-      <form id="custom-meaning">
-        <label class="field"
-          ><span data-i18n="otherMeaning">③ 다른 뜻이에요</span
-          ><input
-            id="custom-text"
-            placeholder="예: 오늘 밤까지 결정해서 답할게요"
-            data-i18n-placeholder="customPlaceholder"
-            required
-            maxlength="300"
-        /></label>
-        <div class="actions">
-          <button class="btn soft"><span data-i18n="sendMeaning">이 뜻으로 보내기</span></button
-          ><button type="button" class="btn" id="send-original">
-            <span data-i18n="sendOriginal">원문 그대로 보내기</span>
-          </button>
-        </div>
-      </form>
-      <p>
-        <span data-i18n="meaningDemo"
-          >예시 표현만 감지하는 데모입니다. 실제 AI 번역은 연결되지 않았어요.</span
-        >
-      </p>
+      <div id="meaning-options"></div>
+      <button type="button" class="btn" id="send-original" data-i18n="sendOriginal"></button>
     </dialog>
 
     <dialog id="workspace-dialog" aria-labelledby="workspace-dialog-title">
@@ -256,19 +209,9 @@
             required
             maxlength="50"
         /></label>
-        <label class="field"
-          ><span data-i18n="description">설명</span
-          ><span class="optional"><span data-i18n="optional">선택</span></span
-          ><textarea
-            id="workspace-summary"
-            placeholder="어떤 일을 함께 하나요?"
-            data-i18n-placeholder="workspaceSummary"
-            maxlength="200"
-            rows="3"
-          ></textarea>
-        </label>
+
         <p class="local-note">
-          <span data-i18n="workspaceLocal">현재 브라우저에 저장되는 로컬 워크스페이스입니다.</span>
+          <span data-i18n="api.roomStorage"></span>
         </p>
         <div class="actions modal-actions">
           <button type="button" class="btn close"><span data-i18n="cancel">취소</span></button
@@ -277,151 +220,65 @@
           </button>
         </div>
       </form>
+      <hr />
+      <form id="join-room-form">
+        <label class="field"
+          ><span data-i18n="api.roomId"></span
+          ><input id="join-room-id" inputmode="numeric" pattern="[0-9]+" required
+        /></label>
+        <p data-i18n="api.joinHelp"></p>
+        <button type="submit" class="btn" data-i18n="api.join"></button>
+      </form>
     </dialog>
     <dialog id="invite-dialog" aria-labelledby="invite-dialog-title">
       <div class="modal-title">
-        <h2 id="invite-dialog-title"><span data-i18n="inviteTitle">친구 초대하기</span></h2>
-        <button type="button" class="close" aria-label="닫기" data-i18n-aria-label="close">
-          ✕
-        </button>
+        <h2 id="invite-dialog-title" data-i18n="api.addMember"></h2>
+        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
       </div>
       <p>
-        <strong id="invite-workspace-name"></strong
-        ><span data-i18n="inviteSuffix">에 함께할 친구를 추가해 보세요.</span>
+        <strong id="invite-workspace-name"></strong> · <span data-i18n="api.roomId"></span>
+        <strong id="invite-room-id"></strong>
       </p>
-      <div class="local-note">
-        <span data-i18n="inviteDemo"
-          >초대 기능 미리보기입니다. 실제 이메일은 발송되지 않아요. 아래 ‘데모: 참여 수락’으로 참여
-          후 화면을 확인할 수 있어요.</span
-        >
-      </div>
+      <p data-i18n="api.memberHelp"></p>
       <form id="invite-form">
         <label class="field"
-          ><span data-i18n="friendName">친구 이름</span
-          ><input
-            id="invite-name"
-            placeholder="이름"
-            data-i18n-placeholder="name"
-            required
-            maxlength="50"
+          ><span data-i18n="api.userId"></span
+          ><input id="invite-user-id" inputmode="numeric" pattern="[0-9]+" required
         /></label>
-        <label class="field"
-          ><span data-i18n="emailLabel">이메일</span
-          ><input
-            id="invite-email"
-            type="email"
-            placeholder="friend@example.com"
-            required
-            maxlength="254"
-        /></label>
-        <label class="field"
-          ><span data-i18n="language">사용 언어</span
-          ><select id="invite-language">
-            <option value="ko">한국어</option>
-            <option value="en">English</option>
-            <option value="vi">Tiếng Việt</option>
-            <option value="de">Deutsch</option>
-          </select></label
-        >
-        <div class="actions modal-actions">
-          <button class="btn primary" type="submit">
-            <span data-i18n="prepareInvite">초대 준비하기</span>
-          </button>
+        <div class="actions">
+          <button type="submit" class="btn primary" data-i18n="api.addMember"></button>
         </div>
       </form>
-      <h3 class="invitation-heading"><span data-i18n="invitationList">초대 목록</span></h3>
+      <h3 data-i18n="api.members"></h3>
       <div id="invitation-list"></div>
     </dialog>
-    <dialog id="leave-dialog" aria-labelledby="leave-title" aria-describedby="leave-description">
-      <div class="modal-title">
-        <h2 id="leave-title"><span data-i18n="leaveTitle">정말 나가시겠습니까?</span></h2>
-        <button type="button" class="close" aria-label="닫기" data-i18n-aria-label="close">
-          ✕
-        </button>
-      </div>
-      <p id="leave-description">
-        <strong id="leave-workspace-name"></strong
-        ><span data-i18n="leaveSuffix"
-          >워크스페이스에서 나갑니다. 이 브라우저의 목록과 해당 공간에 저장한 내용이
-          제거됩니다.</span
-        >
-      </p>
-      <div class="actions modal-actions">
-        <button type="button" class="btn close" autofocus>
-          <span data-i18n="cancel">취소</span></button
-        ><button type="button" class="btn danger" id="confirm-leave">
-          <span data-i18n="leave">나가기</span>
-        </button>
-      </div>
-    </dialog>
+
     <dialog id="agreement-dialog" aria-labelledby="agreement-heading">
-      <h2 id="agreement-heading"><span data-i18n="createCard">합의 카드 만들기</span></h2>
-      <p class="agreement-description">
-        <span data-i18n="agreementDescription"
-          >방금 대화에서 정한 내용을 카드로 고정해요. 팀원 모두가 확인하면 합의 보드에
-          올라가요.</span
-        >
-      </p>
+      <h2 id="agreement-heading" data-i18n="createCard"></h2>
+      <p class="agreement-description" data-i18n="agreementDescription"></p>
       <form id="agreement-form">
-        <fieldset class="agreement-kind">
-          <legend><span data-i18n="kind">종류</span></legend>
-          <label
-            ><input type="radio" name="agreement-type" value="약속" checked /><span
-              ><span data-i18n="promise">약속</span></span
-            ></label
-          >
-          <label
-            ><input type="radio" name="agreement-type" value="규칙" /><span
-              ><span data-i18n="rule">규칙</span></span
-            ></label
-          >
-          <label
-            ><input type="radio" name="agreement-type" value="공지" /><span
-              ><span data-i18n="notice">공지</span></span
-            ></label
-          >
-        </fieldset>
         <label class="field"
-          ><span data-i18n="title">제목</span><input id="agreement-title" required maxlength="80"
-        /></label>
-        <label class="field"
-          ><span data-i18n="content">내용</span
-          ><textarea id="agreement-text" rows="1" required maxlength="500"></textarea>
+          ><span data-i18n="title"></span
+          ><input id="agreement-title" required maxlength="80" /></label
+        ><label class="field"
+          ><span data-i18n="content"></span
+          ><textarea id="agreement-text" rows="3" maxlength="500"></textarea>
         </label>
         <div class="agreement-row">
-          <div class="field">
-            <span data-i18n="assignee">담당자</span>
-            <div class="assignee-box">
-              <span id="assignee-chips"></span
-              ><button
-                type="button"
-                id="assignee-add"
-                aria-expanded="false"
-                aria-controls="assignee-picker"
-              >
-                <span data-i18n="add">+ 추가</span>
-              </button>
-            </div>
-            <div id="assignee-picker" class="assignee-picker" hidden></div>
-          </div>
           <label class="field"
-            ><span data-i18n="dueDate"><span data-i18n="tools.dueDate">마감일</span></span
-            ><input id="agreement-date" type="date" required
+            ><span data-i18n="assignee"></span
+            ><select id="agreement-assignee" required></select></label
+          ><label class="field"
+            ><span data-i18n="dueDate"></span><input id="agreement-date" type="date"
           /></label>
         </div>
         <div class="agreement-preview" aria-live="polite">
-          <small><span data-i18n="previewCard">채팅에 올라갈 카드</span></small
-          ><strong id="agreement-preview-title"></strong
-          ><small
-            ><span data-i18n="cardLocal">현재 워크스페이스 팀원에게 보여요 · 로컬 데모</span></small
-          >
+          <small data-i18n="previewCard"></small><strong id="agreement-preview-title"></strong
+          ><small data-i18n="api.serverCard"></small>
         </div>
         <div class="actions agreement-actions">
-          <button class="btn" id="agreement-cancel" type="button">
-            <span data-i18n="cancel">취소</span></button
-          ><button class="btn primary" type="submit">
-            <span data-i18n="postCard">채팅에 카드 올리기</span>
-          </button>
+          <button type="button" class="btn" id="agreement-cancel" data-i18n="cancel"></button
+          ><button class="btn primary" type="submit" data-i18n="postCard"></button>
         </div>
       </form>
     </dialog>
@@ -432,8 +289,10 @@
     <script src="./js/locales/vi.js"></script>
     <script src="./js/locales/de.js"></script>
     <script src="./js/i18n.js"></script>
+    <script src="./js/config.js"></script>
     <script src="./js/user-api.js"></script>
     <script src="./js/utils.js"></script>
+    <script src="./js/timeline.js"></script>
     <script src="./js/state.js"></script>
     <script src="./js/toast.js"></script>
     <script src="./js/chat.js"></script>
@@ -441,7 +300,7 @@
     <script src="./js/sidebar.js"></script>
     <script src="./js/board.js"></script>
     <script src="./js/invitations.js"></script>
-    <script src="./js/workspace-leave.js"></script>
+    <script src="./js/realtime.js"></script>
     <script src="./js/tools.js"></script>
     <script src="./script.js"></script>
   </body>

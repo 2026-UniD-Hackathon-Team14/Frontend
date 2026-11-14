@@ -1,0 +1,64 @@
+.api-error {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  max-width: min(720px, 94vw);
+  padding: 12px 16px;
+  border: 1px solid #d8a09b;
+  border-radius: 10px;
+  background: #fff0ee;
+  color: #862c25;
+  font-size: 13px;
+  box-shadow: 0 4px 20px #0002;
+}
+.api-error[hidden] {
+  display: none;
+}
+.api-inline-error {
+  color: #862c25;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+#connection-status {
+  font-size: 11px;
+}
+#agreement-assignee {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+  padding: 8px;
+  background: white;
+  color: var(--color-primary);
+}
+#receipt-open-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+}
+#receipt-open-form input {
+  width: 120px;
+}
+.tool-todo form {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+.tool-todo form input {
+  min-width: 0;
+  width: 100%;
+}
+#join-room-form {
+  margin-top: 18px;
+}
+#logout {
+  color: #fff;
+  background: var(--coral-600);
+}

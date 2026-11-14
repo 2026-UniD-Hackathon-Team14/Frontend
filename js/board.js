@@ -8,12 +8,7 @@ function agreementMembers() {
   return activeWorkspace()?.members || [];
 }
 function agreementComplete(card) {
-  const members = agreementMembers();
-  return (
-    members.length > 0 &&
-    members.every((member) => card.confirmedIds.includes(member.id)) &&
-    !(typeof receiptCardDisputed === "function" && receiptCardDisputed(card))
-  );
+  return card.status === "CONFIRMED";
 }
 function agreementName(id) {
   return agreementMembers().find((member) => member.id === id)?.name || t("unknownMember");
@@ -56,20 +51,13 @@ function renderAgreementMessage(reference) {
     waiting = members.filter((m) => !card.confirmedIds.includes(m.id));
   const title = ContentAPI.cardText(card, "title"),
     text = ContentAPI.cardText(card, "text");
-  return `<article class="chat-agreement ${agreed ? "is-complete" : ""}" data-card-id="${esc(card.id)}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))} · ${esc(cardTypeLabel(card.type))}</span>${agreed ? '<span class="agreement-success-tag">' + esc(t("allConfirmed")) + "</span>" : '<span class="agreement-byline">' + esc(t("createdBy", { name: card.createdByName, time: card.time })) + "</span>"}</div><h3>${esc(title)}</h3><p class="agreement-body">${esc(text)}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="agreement-confirmation">${agreementAvatars(card)}<span class="agreement-progress"><b>${esc(t("confirmationCount", { count: members.length - waiting.length, total: members.length }))}</b> · ${esc(agreed ? t("pinned") : t("waitingFor", { names: waiting.map((m) => m.name).join(", ") }))}</span>${agreed ? "" : `<button type="button" class="agreement-confirm ${mine ? "is-checked" : ""}" data-confirm-agreement="${esc(card.id)}" ${mine ? "disabled" : ""}>${esc(t(mine ? "confirmedByMe" : "confirm"))}</button>`}</div></article>${agreed ? '<div class="agreement-pin-notice">✓ ' + esc(t("pinNotice", { title })) + "</div>" : ""}`;
+  return `<article class="chat-agreement ${agreed ? "is-complete" : ""}" data-card-id="${esc(card.id)}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))}</span>${agreed ? '<span class="agreement-success-tag">' + esc(t("allConfirmed")) + "</span>" : '<span class="agreement-byline">' + "" + "</span>"}</div><h3>${esc(title)}</h3><p class="agreement-body">${esc(text)}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="agreement-confirmation">${agreementAvatars(card)}<span class="agreement-progress"><b>${esc(t("confirmationCount", { count: members.length - waiting.length, total: members.length }))}</b> · ${esc(agreed ? t("pinned") : t("waitingFor", { names: waiting.map((m) => m.name).join(", ") }))}</span>${agreed ? "" : `<button type="button" class="agreement-confirm ${mine ? "is-checked" : ""}" data-confirm-agreement="${esc(card.id)}" ${mine ? "disabled" : ""}>${esc(t(mine ? "confirmedByMe" : "confirm"))}</button>`}</div></article>${agreed ? '<div class="agreement-pin-notice">✓ ' + esc(t("pinNotice", { title })) + "</div>" : ""}`;
 }
 function renderAgreementViewer() {
-  const members = agreementMembers();
-  if (!members.some((member) => member.id === agreementViewer)) agreementViewer = currentUser.id;
-  $("#agreement-viewer").innerHTML = members
-    .map((member) => `<option value="${esc(member.id)}">${esc(member.name)}</option>`)
-    .join("");
-  $("#agreement-viewer").value = agreementViewer;
-  $("#agreement-viewer").disabled = !members.length;
-  $("#create-card").disabled = !activeWorkspace();
+  agreementViewer = currentUser.id;
+  $("#create-card").disabled = !ready || !activeWorkspace();
 }
 function renderBoard() {
-  if (typeof refreshWorkspaceTools === "function") refreshWorkspaceTools();
   renderAgreementViewer();
   const confirmed = agreementCards().filter(agreementComplete);
   const visible = confirmed.filter((c) => boardFilter === "전체" || c.type === boardFilter);
@@ -79,7 +67,7 @@ function renderBoard() {
         .reverse()
         .map(
           (card) =>
-            `<article class="card pinned-agreement ${card.justPinned ? "is-new" : ""}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(cardTypeLabel(card.type))}</span>${card.justPinned ? '<span class="agreement-success-tag">' + esc(t("justPinned")) + "</span>" : ""}</div><h3>${esc(ContentAPI.cardText(card, "title"))}</h3><p>${esc(ContentAPI.cardText(card, "text"))}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="confirmed">✓ ${esc(t("confirmedCount", { count: agreementMembers().length }))}</div></article>`,
+            `<article class="card pinned-agreement ${card.justPinned ? "is-new" : ""}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))}</span>${card.justPinned ? '<span class="agreement-success-tag">' + esc(t("justPinned")) + "</span>" : ""}</div><h3>${esc(ContentAPI.cardText(card, "title"))}</h3><p>${esc(ContentAPI.cardText(card, "text"))}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="confirmed">✓ ${esc(t("allConfirmed"))}</div><button type="button" class="btn" data-export-card="${esc(card.id)}" ${card.date ? "" : "disabled"}>${esc(t("api.addCalendar"))}</button></article>`,
         )
         .join("")
     : '<p class="empty">' + esc(t(confirmed.length ? "emptyCategory" : "boardWaiting")) + "</p>";
@@ -89,120 +77,61 @@ function renderBoard() {
     button.setAttribute("aria-pressed", String(selected));
   });
 }
+
 function initBoard() {
-  const dialog = $("#agreement-dialog");
-  const form = $("#agreement-form");
-  const assignees = () =>
-    [...form.querySelectorAll('[name="assignee"]:checked')].map((input) => input.value);
+  const dialog = $("#agreement-dialog"),
+    form = $("#agreement-form");
   function preview() {
-    const names = assignees().map(agreementName);
-    $("#assignee-chips").innerHTML = names
-      .map(
-        (name) =>
-          `<span class="assignee-chip"><span>${esc(Array.from(name)[0])}</span>${esc(name)}</span>`,
-      )
-      .join("");
     $("#agreement-preview-title").textContent =
       ($("#agreement-title").value.trim() || t("title")) +
       " · " +
       t("assignee") +
       " " +
-      (names.join(" · ") || t("unassigned")) +
+      agreementName($("#agreement-assignee").value) +
       " · " +
       ($("#agreement-date").value || t("noDueDate"));
   }
-  $("#create-card").addEventListener("click", () => {
+  $("#create-card").onclick = () => {
     if (!activeWorkspace()) return;
     form.reset();
-    $("#assignee-picker").innerHTML = agreementMembers()
-      .map(
-        (member) =>
-          `<label><input type="checkbox" name="assignee" value="${esc(member.id)}" ${member.id === currentUser.id ? "checked" : ""}>${esc(member.name)}</label>`,
-      )
+    $("#agreement-assignee").innerHTML = agreementMembers()
+      .map((m) => '<option value="' + esc(m.id) + '">' + esc(m.name) + "</option>")
       .join("");
-    $("#assignee-picker").hidden = true;
-    $("#assignee-add").setAttribute("aria-expanded", "false");
+    $("#agreement-assignee").value = currentUser.id;
     preview();
     dialog.showModal();
-  });
-  $("#agreement-cancel").addEventListener("click", () => dialog.close());
-  $("#assignee-add").addEventListener("click", () => {
-    const picker = $("#assignee-picker");
-    picker.hidden = !picker.hidden;
-    $("#assignee-add").setAttribute("aria-expanded", String(!picker.hidden));
-  });
-  document.addEventListener("languagechange", preview);
+  };
   form.addEventListener("input", preview);
-  form.addEventListener("change", preview);
-  form.addEventListener("submit", (event) => {
+  document.addEventListener("languagechange", preview);
+  $("#agreement-cancel").onclick = () => dialog.close();
+  form.onsubmit = (event) => {
     event.preventDefault();
-    for (const id of ["#agreement-title", "#agreement-text"]) $(id).value = $(id).value.trim();
-    if (!form.reportValidity()) return;
-    if (!assignees().length) return toast("chooseAssignee");
-    const workspace = activeWorkspace();
-    if (!workspace) return;
-    const card = {
-      schema: 2,
-      id: newId("agreement"),
-      type: form.querySelector('[name="agreement-type"]:checked').value,
-      title: $("#agreement-title").value,
-      text: $("#agreement-text").value,
-      date: $("#agreement-date").value,
-      assigneeIds: assignees(),
-      confirmedIds: [],
-      createdByName: currentUser.name,
-      time: new Date().toLocaleTimeString(I18n.locale, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
-      justPinned: false,
-    };
-    workspace.cards.push(card);
-    workspace.messages.push({ agreement: { id: card.id } });
-    saveState();
-    renderMessages();
-    renderBoard();
-    dialog.close();
-    toast("cardPosted");
-  });
-  $("#agreement-viewer").addEventListener("change", (event) => {
-    if (!agreementMembers().some((member) => member.id === event.target.value)) return;
-    agreementViewer = event.target.value;
-    renderMessages();
-  });
+    const title = $("#agreement-title").value.trim();
+    if (!title || !form.reportValidity()) return;
+    const roomId = channel;
+    runAction(form.querySelector("[type=submit]"), async () => {
+      const createdCard = await API.request("/rooms/" + roomId + "/cards", {
+        method: "POST",
+        body: {
+          title,
+          content: $("#agreement-text").value.trim(),
+          assigneeId: API.id($("#agreement-assignee").value),
+          dueDate: $("#agreement-date").value || null,
+        },
+      });
+      rememberTimelineCard(roomId, createdCard.id);
+      dialog.close();
+      await refreshRoom();
+    });
+  };
   document.addEventListener("click", (event) => {
-    const confirm = event.target.closest("button[data-confirm-agreement]");
-    if (confirm) {
-      const card = agreementCards().find((item) => item.id === confirm.dataset.confirmAgreement);
-      if (card && typeof receiptCardDisputed === "function" && receiptCardDisputed(card)) {
-        toast("tools.blocked");
-        return;
-      }
-      if (
-        !card ||
-        !agreementMembers().some((member) => member.id === agreementViewer) ||
-        card.confirmedIds.includes(agreementViewer)
-      )
-        return;
-      card.confirmedIds.push(agreementViewer);
-      const complete = agreementComplete(card);
-      if (complete) {
-        agreementCards().forEach((item) => (item.justPinned = false));
-        card.justPinned = true;
-        boardFilter = "전체";
-      }
-      saveState();
-      renderMessages();
-      renderBoard();
-      if (complete) toast("cardPinned");
-      return;
-    }
-    const filter = event.target.closest("button[data-filter]");
-    if (filter) {
-      boardFilter = filter.dataset.filter;
-      renderBoard();
-    }
+    const button = event.target.closest("[data-confirm-agreement]");
+    if (button)
+      runAction(button, async () => {
+        await API.request("/cards/" + API.id(button.dataset.confirmAgreement) + "/confirm", {
+          method: "POST",
+        });
+        await refreshRoom();
+      });
   });
-  renderBoard();
 }

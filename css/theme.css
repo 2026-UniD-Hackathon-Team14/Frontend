@@ -112,7 +112,7 @@ h1 {
   gap: 8px;
 }
 .room-actions .agreement-create,
-.room-actions #end-meeting {
+.room-actions #settle-agreements {
   min-height: 36px;
   padding: 7px 14px;
   border-radius: 8px;

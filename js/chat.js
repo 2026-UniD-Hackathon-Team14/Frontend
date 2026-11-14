@@ -26,65 +26,65 @@ function renderMessages() {
     el.innerHTML += '<div class="empty">' + esc(t("emptyChat")) + "</div>";
   el.scrollTop = el.scrollHeight;
 }
-function pushMessage(text, selectedIntent = null, customIntentText = "") {
-  if (!activeWorkspace()) return;
-  chats[channel].push({
-    senderId: currentUser.id,
-    name: currentUser.name,
-    initial: Array.from(currentUser.name)[0],
-    originalLanguage: currentUser.language,
-    originalText: text,
-    text,
-    selectedIntent,
-    customIntentText,
-    time: new Date().toLocaleTimeString(I18n.locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }),
+
+async function pushMessage(text, selectedIntent = null, sendOriginal = false) {
+  const roomId = pending?.roomId || channel;
+  await API.request("/rooms/" + roomId + "/messages", {
+    method: "POST",
+    body: { text, selectedIntent, sendOriginal },
   });
-  saveState();
-  $("#message-input").value = "";
-  renderMessages();
+  // Clear only the submitted draft, never a new draft typed while the request was pending.
+  if (channel === roomId && $("#message-input").value.trim() === text)
+    $("#message-input").value = "";
+  pending = null;
+  $("#meaning-dialog").close();
+  await refreshRoom();
 }
 async function sendMessage() {
-  if (busy || !activeWorkspace()) return;
-  const text = $("#message-input").value.trim();
+  if (busy || pending || !ready || !activeWorkspace()) return;
+  const text = $("#message-input").value.trim(),
+    roomId = channel;
   if (!text) return;
   busy = true;
   $("#send").disabled = true;
   $("#send").textContent = t("checking");
-  await new Promise((resolve) => setTimeout(resolve, 450));
-  // Demo analysis only; production uses POST /rooms/{roomId}/messages/analyze.
-  if (text.includes("생각해볼게요")) {
-    pending = text;
-    $("#pending-text").textContent = text;
-    $("#meaning-dialog").showModal();
-  } else {
-    pushMessage(text);
-    toast("messageAdded");
+  try {
+    const analysis = await API.request("/rooms/" + roomId + "/messages/analyze", {
+      method: "POST",
+      body: { text },
+    });
+    if (analysis.ambiguous && analysis.expressions?.length) {
+      pending = { text, roomId, expressions: analysis.expressions };
+      renderMeaning();
+      $("#meaning-dialog").showModal();
+    } else await pushMessage(text, null, false);
+  } catch (error) {
+    showError(error);
+  } finally {
+    busy = false;
+    $("#send").disabled = !activeWorkspace();
+    $("#send").textContent = t("send");
   }
-  busy = false;
-  $("#send").disabled = false;
-  $("#send").textContent = t("send");
 }
 function initChat() {
   document.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-original]");
-    if (!button) return;
-    const m = chats[channel][Number(button.dataset.original)];
-    m.open = !m.open;
-    renderMessages();
+    const b = event.target.closest("[data-original]");
+    if (b) {
+      const message = chats[channel]?.[Number(b.dataset.original)];
+      if (message) {
+        message.open = !message.open;
+        renderMessages();
+      }
+    }
   });
-  $("#message-form").addEventListener("submit", (event) => {
+  $("#message-form").onsubmit = (event) => {
     event.preventDefault();
     sendMessage();
-  });
-  $("#message-input").addEventListener("keydown", (event) => {
+  };
+  $("#message-input").onkeydown = (event) => {
     if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       sendMessage();
     }
-  });
-  renderMessages();
+  };
 }

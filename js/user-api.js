@@ -1,127 +1,132 @@
 "use strict";
-// Explicit opt-in: window.NUNCHI_API_CONFIG = { mode: 'api', baseUrl: '/api' } before this file.
+window.API = (() => {
+  const config = window.NUNCHI_API_CONFIG;
+  async function request(path, { method = "GET", body, userId = UserAPI.user?.id, signal } = {}) {
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (signal?.aborted) abort();
+    signal?.addEventListener("abort", abort, { once: true });
+    const timeout = setTimeout(abort, 60000);
+    try {
+      const headers = { Accept: "application/json" };
+      if (body !== undefined) headers["Content-Type"] = "application/json";
+      if (userId) headers["X-User-Id"] = String(userId);
+      const response = await fetch(config.baseUrl.replace(/\/$/, "") + path, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const text = await response.text();
+      let result;
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch {
+        throw Object.assign(new Error("api.invalidResponse"), { status: response.status });
+      }
+      if (!response.ok || result?.success === false) {
+        throw Object.assign(new Error("api.requestFailed"), {
+          status: response.status,
+          code: result?.error?.code,
+          serverMessage: result?.error?.message,
+        });
+      }
+      if (response.status === 204) return null;
+      if (result?.success !== true) throw new Error("api.invalidResponse");
+      return result.data;
+    } catch (error) {
+      if (error.name === "AbortError")
+        throw new Error(method === "GET" ? "api.timeout" : "api.uncertain");
+      if (error instanceof TypeError) throw new Error("api.network");
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", abort);
+    }
+  }
+  function id(value) {
+    const number = Number(value);
+    if (!/^\d+$/.test(String(value).trim()) || !Number.isSafeInteger(number) || number < 1)
+      throw new Error("api.invalidId");
+    return number;
+  }
+  return { request, id, query: () => "?lang=" + encodeURIComponent(I18n.language) };
+})();
 window.UserAPI = (() => {
-  let config = { mode: "mock", baseUrl: "/api", ...window.NUNCHI_API_CONFIG };
+  const key = "nunchichat.server-user.v1";
   let user = null;
   try {
-    const saved = JSON.parse(localStorage.getItem("nunchichat.user"));
-    if (
-      saved &&
-      saved.id != null &&
-      typeof saved.name === "string" &&
-      I18n.supported.includes(saved.language)
-    )
+    const saved = JSON.parse(localStorage.getItem(key));
+    if (saved?.id && I18n.supported.includes(saved.language)) {
+      API.id(saved.id);
       user = saved;
+    }
   } catch {}
-  function persist() {
-    try {
-      if (user) localStorage.setItem("nunchichat.user", JSON.stringify(user));
-    } catch {}
-  }
   function applyUser(response) {
-    if (response?.success === false) throw new Error("apiError");
     const data = response?.data ?? response;
-    if (
-      data?.id == null ||
-      typeof data.name !== "string" ||
-      !I18n.supported.includes(data.language)
-    )
-      throw new Error("apiError");
+    API.id(data?.id);
+    if (typeof data.name !== "string" || !I18n.supported.includes(data.language))
+      throw new Error("api.invalidResponse");
     user = { id: String(data.id), name: data.name, language: data.language };
-    persist();
-    I18n.setLanguage(user.language, { source: "user" });
+    try {
+      localStorage.setItem(key, JSON.stringify(user));
+    } catch {}
+    let language = user.language;
+    try {
+      const saved = localStorage.getItem("nunchichat.ui-language." + user.id);
+      if (I18n.supported.includes(saved)) language = saved;
+    } catch {}
+    I18n.setLanguage(language, { source: "user" });
     document.dispatchEvent(new CustomEvent("userchange", { detail: { user: { ...user } } }));
     return { ...user };
   }
-  async function request(uri, options = {}) {
-    const response = await fetch(config.baseUrl.replace(/\/$/, "") + uri, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(user ? { "X-User-Id": user.id } : {}),
-        ...options.headers,
-      },
-    });
-    if (!response.ok) throw new Error("apiError");
-    const result = await response.json();
-    if (!result.success) throw new Error("apiError");
-    return result;
-  }
-  function registrationPayload({ name, language }) {
-    if (typeof name !== "string" || !name.trim()) throw new Error("nameRequired");
+  async function register({ name, language }) {
+    if (!name?.trim()) throw new Error("nameRequired");
     if (!I18n.supported.includes(language)) throw new Error("unsupportedLanguage");
-    return { name: name.trim(), language };
-  }
-  async function register(values) {
-    const payload = registrationPayload(values);
-    const response =
-      config.mode === "api"
-        ? await request("/users", { method: "POST", body: JSON.stringify(payload) })
-        : {
-            success: true,
-            data: { id: "local-" + (globalThis.crypto?.randomUUID?.() || Date.now()), ...payload },
-            error: null,
-          };
-    return applyUser(response);
+    return applyUser(
+      await API.request("/users", {
+        method: "POST",
+        userId: null,
+        body: { name: name.trim(), language },
+      }),
+    );
   }
   async function loadUser(id) {
-    if (config.mode === "api")
-      return applyUser(
-        await request("/users/" + encodeURIComponent(id), { headers: { "X-User-Id": String(id) } }),
-      );
-    if (user && user.id === String(id)) return applyUser(user);
-    throw new Error("apiError");
+    return applyUser(await API.request("/users/" + API.id(id), { userId: null }));
+  }
+  function logout() {
+    user = null;
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+    location.assign("./login.html");
   }
   document.addEventListener("languagechange", (event) => {
-    if (user && event.detail.source !== "user") {
-      user.language = event.detail.language;
-      persist();
-    }
+    if (user && event.detail.source !== "user")
+      try {
+        localStorage.setItem("nunchichat.ui-language." + user.id, event.detail.language);
+      } catch {}
   });
   return {
     register,
     loadUser,
     applyUser,
-    registrationPayload,
-    configure(options) {
-      config = { ...config, ...options };
-    },
-    get mode() {
-      return config.mode;
-    },
+    logout,
     get user() {
       return user ? { ...user } : null;
     },
   };
 })();
-// No frontend machine translation. Only use translations returned by the server.
 window.ContentAPI = {
   messageText(message) {
     return (
       message.translations?.[I18n.language] ??
       (message.translatedLanguage === I18n.language ? message.translatedText : null) ??
       message.originalText ??
-      message.text ??
       ""
     );
   },
   cardText(card, field) {
-    return (
-      card.translations?.[I18n.language]?.[field] ??
-      (card.translatedLanguage === I18n.language
-        ? card["translated" + field[0].toUpperCase() + field.slice(1)]
-        : null) ??
-      card[field] ??
-      ""
-    );
-  },
-  languageQuery() {
-    return "lang=" + encodeURIComponent(I18n.language);
-  },
-  messageList(items, language) {
-    return items.map((item) => ({ ...item, translatedLanguage: language }));
-  },
-  cardList(items, language) {
-    return items.map((item) => ({ ...item, translatedLanguage: language }));
+    return card[field] ?? "";
   },
 };
