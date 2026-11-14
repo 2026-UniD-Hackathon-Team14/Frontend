@@ -1,0 +1,98 @@
+/* 제공된 확인 대기 / 전원 확인 시안 */
+:root {
+  --ink: #202936;
+  --muted: #667085;
+  --green: #202b3c;
+  --light: #f2f3f6;
+  --line: #e0e3e8;
+  --paper: #ffffff;
+  --agreement-success: #078432;
+}
+.side { background: #f6f7f9; }
+.nav-btn.active { background: #e7e8ec; color: #202936; }
+.mark { background: #202b3c; }
+.workspace { border-color: #e0e3e8; }
+.board { background: #fafafb; }
+.board-title h2 { color: #202936; }
+.eyebrow { color: #667085; }
+.filter { color: #667085; }
+.filter.active { color: #202936; background: #e7e8ec; }
+.counter { background: #f0f1f4; color: #202936; }
+.avatar { border-radius: 50%; background: #d4d7df; color: #202936; }
+.avatar.me { background: #364153; }
+.avatar.lena { background: #9ca4b3; color: #202936; }
+.avatar.linh { background: #eceef3; color: #202936; }
+.message.mine { flex-direction: row-reverse; }
+.message.mine .who { justify-content: flex-end; }
+.message.mine .bubble { border-radius: 14px 4px 14px 14px; background: #202b3c; border-color: #202b3c; color: #fff; }
+.message .bubble { border: 0; background: #f3f4f6; border-radius: 4px 14px 14px 14px; line-height: 1.6; }
+.message .lang { background: #f0f1f4; color: #667085; }
+.meaning { color: #078432; }
+.agreement-viewer-label { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #667085; }
+.agreement-viewer-label select { border: 1px solid #c7cdd7; border-radius: 7px; padding: 5px 7px; font-size: 12px; color: #202936; background: #fff; }
+.chat-agreement {
+  width: min(540px, 100%);
+  max-width: 540px;
+  margin: 8px auto 22px;
+  border: 1px solid #243249;
+  border-radius: 13px;
+  padding: 17px 18px;
+  color: #202936;
+  background: #fff;
+  box-shadow: 0 4px 14px #1e293b0a;
+  overflow-wrap: anywhere;
+}
+.agreement-card-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.agreement-tag, .agreement-success-tag {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #344054;
+  background: #f1f2f5;
+}
+.agreement-success-tag { background: #edfdf2; color: #078432; }
+.agreement-byline { font-size: 10px; color: #475467; }
+.chat-agreement h3 { margin: 10px 0 8px; color: #202936; font-size: 16px; line-height: 1.5; font-weight: 700; }
+.chat-agreement p.agreement-body { margin: 0 0 10px; color: #344054; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+.agreement-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.agreement-meta > span { background: #f3f4f6; color: #344054; padding: 3px 8px; border-radius: 6px; font-size: 11px; }
+.agreement-confirmation { display: flex; align-items: center; gap: 10px; margin-top: 12px; border-top: 1px solid #eaecf0; padding-top: 12px; }
+.agreement-people { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.agreement-person { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #344054; background: #e9ecf1; font-size: 10px; }
+.agreement-person.person-0 { background: #364153; color: #fff; }
+.agreement-person.person-1 { background: #9ca4b3; color: #202936; }
+.agreement-person.person-2 { background: #d4d7df; color: #202936; }
+.agreement-person.person-3 { background: #eceef3; color: #202936; }
+.agreement-person.is-waiting { background: #fff; color: #667085; border: 1px dashed #8591a3; }
+.agreement-person i { position: absolute; display: grid; place-items: center; right: -3px; bottom: -2px; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; background: #078432; color: #fff; font-size: 9px; font-style: normal; }
+.agreement-progress { flex: 1; color: #344054; font-size: 11px; line-height: 1.6; }
+.agreement-progress b { font-weight: 600; color: #078432; }
+.agreement-confirm { flex-shrink: 0; padding: 8px 13px; min-height: 36px; border: 1px solid #202b3c; border-radius: 7px; background: #202b3c; color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.agreement-confirm.is-checked { background: #effdf4; border-color: #86e5a2; color: #078432; opacity: 1; cursor: default; }
+.chat-agreement.is-complete { border-color: #079234; box-shadow: none; }
+.chat-agreement.is-complete h3 { font-size: 14px; margin-bottom: 10px; }
+.is-complete .agreement-confirmation { border-top: 0; margin-top: 0; padding-top: 0; }
+.is-complete .agreement-progress { color: #078432; }
+.agreement-pin-notice { width: fit-content; max-width: 100%; margin: -8px auto 24px; padding: 5px 13px; border-radius: 999px; background: #f3f4f6; color: #475467; font-size: 10px; text-align: center; overflow-wrap: anywhere; }
+.pinned-agreement { padding: 14px; border: 1px solid #e0e3e8; border-radius: 12px; overflow-wrap: anywhere; }
+.pinned-agreement.is-new { border-color: #079234; box-shadow: 0 4px 16px #07843210; }
+.pinned-agreement h3 { margin: 10px 0 8px; color: #202936; font-size: 13px; }
+.pinned-agreement p { color: #344054; font-size: 11px; white-space: pre-wrap; margin: 6px 0 10px; }
+.pinned-agreement .confirmed { color: #078432; border-top: 0; padding-top: 10px; font-size: 11px; }
+.pinned-agreement .agreement-meta > span { font-size: 10px; }
+@media (max-width: 1150px) {
+  .agreement-confirmation { flex-wrap: wrap; }
+  .agreement-progress { min-width: 100px; }
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr) 260px; }
+}
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 1fr; grid-template-rows: minmax(480px, 1fr) auto; overflow: auto; }
+  .layout .board { display: flex; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .chat-agreement { padding: 14px; }
+  .agreement-viewer-label { flex-wrap: wrap; }
+}

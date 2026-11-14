@@ -4,6 +4,7 @@ function renderMessages() {
     '<div class="date-divider">자료조사</div>' +
     chats[channel]
       .map((m, i) => {
+        if (m.agreement) return renderAgreementMessage(m.agreement);
         return `<div class="message ${m.name === "민준" ? "mine" : ""}"><span class="avatar ${m.name === "Lena" ? "lena" : m.name === "Linh" ? "linh" : m.name === "민준" ? "me" : ""}">${esc(m.initial)}</span><div class="message-body"><div class="who">${esc(m.name)}<span class="lang">${esc(m.lang)}</span><span class="time">${esc(m.time)}</span></div><div class="bubble">${esc(m.text)}</div>${m.meaning ? '<div class="meaning">✓ 전달할 뜻: ' + esc(m.meaning) + "</div>" : ""}${m.translation ? '<div class="original">English · 예시 수신 화면<br>' + esc(m.translation) + "</div>" : ""}${m.original ? `<div class="original" ${m.open ? "" : "hidden"}>원문 · ${esc(m.lang)}<br>${esc(m.original)}</div><button class="link" data-original="${i}">${m.open ? "원문 숨기기 ▴" : "원문 보기 ▾"}</button>` : ""}</div></div>`;
       })
       .join("");

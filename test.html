@@ -49,25 +49,20 @@
             <div class="room-bar">
               <strong id="room-title"># 자료조사</strong>
               <div class="room-members">
-                <span><span class="online"></span>팀원 4명</span>
-                <div class="people" aria-label="팀원: 민준, Lena, 서연, Linh">
-                  <span class="avatar me" title="민준">민</span>
-                  <span class="avatar lena" title="Lena">L</span>
-                  <span class="avatar" title="서연">서</span>
-                  <span class="avatar linh" title="Linh">Li</span>
-                </div>
+                <span><span class="online"></span>팀원 1명</span>
+                <div class="people" aria-label="팀원: 민준">
+                  <span class="avatar me" title="민준">민</span>                </div>
               </div>
               <div class="room-actions">
                 <button
                   class="btn agreement-create"
                   id="create-card"
                   type="button"
-                  title="합의 카드 생성 기능은 준비 중이에요"
-                  disabled
+                  aria-controls="board-cards"
                 >
                   합의 카드 만들기
                 </button>
-                <span class="room-language">◎ 한국어로 보는 중</span>
+                <label class="agreement-viewer-label">현재 팀원<select id="agreement-viewer" aria-label="확인할 팀원 선택"><option>민준</option></select></label>
               </div>
             </div>
             <div class="messages" id="messages" role="log" aria-label="팀 채팅"></div>
@@ -85,7 +80,7 @@
                 </div>
               </div>
               <div class="hint">
-                <span>◎ Lena는 English, Linh은 Tiếng Việt로 읽어요.</span
+                <span>◎ 민준 · 한국어로 읽는 중</span
                 ><span>Enter 전송 · Shift + Enter 줄바꿈</span>
               </div>
             </form>
@@ -102,11 +97,11 @@
               ><button class="filter" data-filter="규칙">규칙</button
               ><button class="filter" data-filter="공지">공지</button>
             </div>
-            <div id="board-cards"><p class="empty">아직 등록된 합의가 없어요.</p></div>
+            <div id="board-cards" aria-live="polite"><p class="empty">아직 등록된 합의가 없어요.</p></div>
 
             <div class="board-footer">
-              <strong>작은 확인이, 큰 오해를 줄이니까.</strong>팀원 모두가 확인한 약속만 이곳에
-              모여요.<br />서로 같은 뜻으로 이해했는지 함께 확인해요.
+              <strong>작은 확인이, 큰 오해를 줄이니까.</strong>채팅에서 민준이 확인한 합의가
+              이곳에 고정돼요.<br />서로 같은 뜻으로 이해했는지 함께 확인해요.
             </div>
           </aside>
         </div>
@@ -144,6 +139,30 @@
       <p>예시 표현만 감지하는 데모입니다. 실제 AI 번역은 연결되지 않았어요.</p>
     </dialog>
 
+    <dialog id="agreement-dialog" aria-labelledby="agreement-heading">
+      <h2 id="agreement-heading">합의 카드 만들기</h2>
+      <p class="agreement-description">방금 대화에서 정한 내용을 카드로 고정해요. 팀원 모두가 확인하면 합의 보드에 올라가요.</p>
+      <form id="agreement-form">
+        <fieldset class="agreement-kind"><legend>종류</legend>
+          <label><input type="radio" name="agreement-type" value="약속" checked><span>약속</span></label>
+          <label><input type="radio" name="agreement-type" value="규칙"><span>규칙</span></label>
+          <label><input type="radio" name="agreement-type" value="공지"><span>공지</span></label>
+        </fieldset>
+        <label class="field">제목<input id="agreement-title" required maxlength="80"></label>
+        <label class="field">내용<textarea id="agreement-text" rows="1" required maxlength="500"></textarea></label>
+        <div class="agreement-row">
+          <div class="field">담당자
+            <div class="assignee-box"><span id="assignee-chips"></span><button type="button" id="assignee-add" aria-expanded="false" aria-controls="assignee-picker">+ 추가</button></div>
+            <div id="assignee-picker" class="assignee-picker" hidden>
+              <label><input type="checkbox" name="assignee" value="민준" checked>민준</label>
+            </div>
+          </div>
+          <label class="field">마감일<input id="agreement-date" type="date" required></label>
+        </div>
+        <div class="agreement-preview" aria-live="polite"><small>채팅에 올라갈 카드</small><strong id="agreement-preview-title"></strong><small>민준 · 한국어로 보여요</small></div>
+        <div class="actions agreement-actions"><button class="btn" id="agreement-cancel" type="button">취소</button><button class="btn primary" type="submit">채팅에 카드 올리기</button></div>
+      </form>
+    </dialog>
     <div class="toast" id="toast" role="status" hidden></div>
     <!-- 공통 도구와 상태 → 기능 → 앱 초기화 순으로 실행합니다. -->
     <script src="./js/utils.js"></script>

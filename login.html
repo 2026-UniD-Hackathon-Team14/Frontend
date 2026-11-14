@@ -362,7 +362,7 @@
           </button>
           <p class="form-status" id="form-status" role="status" aria-live="polite" hidden=""></p>
         </form>
-        <p class="form-caption" data-i18n="formCaption">로그인 화면 미리보기입니다.</p>
+        <p class="form-caption" data-i18n="formCaption">이메일과 비밀번호를 입력하면 테스트 페이지로 이동합니다.</p>
       </div>
 
       <footer class="panel-footer">© 눈치챗</footer>
@@ -402,7 +402,7 @@
         emailInvalid: "올바른 이메일 주소를 입력해 주세요.",
         passwordRequired: "비밀번호를 입력해 주세요.",
         previewMessage: "입력 형식이 확인됐어요. 실제 로그인은 인증 서버를 연결한 뒤 사용할 수 있어요.",
-        formCaption: "로그인 화면 미리보기입니다."
+        formCaption: "이메일과 비밀번호를 입력하면 테스트 페이지로 이동합니다."
       },
       en: {
         pageTitle: "눈치챗 · Log in",
@@ -435,7 +435,7 @@
         emailInvalid: "Enter a valid email address.",
         passwordRequired: "Enter your password.",
         previewMessage: "Your input format looks good. Connect an authentication server to enable account login.",
-        formCaption: "This is a preview of the login screen."
+        formCaption: "Enter your email and password to open the test page."
       }
     };
 
@@ -568,10 +568,8 @@
         // 이메일 기억하기를 사용할 수 없어도 폼 확인을 계속합니다.
       }
 
-      // 백엔드 연결 지점입니다. emailInput.value와 passwordInput.value를
-      // 인증 API로 전송하고 서버 응답에 따라 화면을 이동하거나 오류를 표시하세요.
-      formStatus.textContent = translations[currentLanguage].previewMessage;
-      formStatus.hidden = false;
+      // 데모 로그인: 입력 형식 확인 후 테스트 페이지로 이동합니다.
+      window.location.assign("./test.html");
     });
   </script>
 
