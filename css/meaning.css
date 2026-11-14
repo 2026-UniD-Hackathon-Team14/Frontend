@@ -1,0 +1,42 @@
+/* 전송 전 의미 확인 패널 */
+#meaning-dialog { width: min(700px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 22px 20px 18px; border: 1px solid #cbd3df; border-radius: 14px; background: #fff; color: var(--color-text-strong); box-shadow: 0 8px 30px #1f3a5f12; }
+#meaning-dialog::backdrop { background: #18202c45; backdrop-filter: none; }
+.meaning-sheet-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.meaning-check-badge { flex-shrink: 0; padding: 3px 9px; border-radius: 999px; background: #fff2bf; color: #8a4b0e; font-size: 11px; font-weight: 700; }
+#meaning-audience { flex: 1; margin: 0; font-size: 11px; line-height: 1.6; color: var(--color-text-muted); }
+.meaning-sheet-heading .close { align-self: start; min-width: 28px; min-height: 28px; color: var(--color-text-subtle); }
+.meaning-message-preview { padding: 11px 13px; background: #f7f8fa; border-radius: 9px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.6; }
+#meaning-dialog mark { padding: 1px 2px; background: #fff1c6; color: inherit; border-radius: 2px; text-decoration: underline; text-decoration-color: #d9a441; text-underline-offset: 4px; }
+#meaning-question { margin: 15px 0 12px; font-size: 16px; font-weight: 700; line-height: 1.5; }
+#meaning-options { display: grid; gap: 8px; }
+.meaning-option { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 62px; border: 1px solid #cbd3df; border-radius: 10px; padding: 12px 14px; background: #fff; color: var(--color-text-strong); text-align: left; }
+.meaning-option.is-first { border-color: #202b3c; background: #f8f9fb; }
+.meaning-option:hover { border-color: var(--color-primary); background: #f7f8fa; filter: none; }
+.meaning-option-number { display: grid; place-items: center; flex-shrink: 0; width: 23px; height: 23px; border: 1px solid #697586; border-radius: 50%; color: #202b3c; font-size: 12px; }
+.meaning-option.is-first .meaning-option-number { color: #fff; background: #202b3c; border-color: #202b3c; }
+.meaning-option-copy { flex: 1; min-width: 0; }
+.meaning-option-copy b { display: block; font-size: 14px; font-weight: 650; }
+.meaning-option-copy small { display: block; margin-top: 3px; font-size: 11px; color: var(--color-text-subtle); line-height: 1.6; }
+.meaning-option-send { flex-shrink: 0; font-size: 11px; color: var(--color-text-muted); }
+.meaning-sheet-footer { display: flex; align-items: center; gap: 16px; margin-top: 14px; padding-top: 13px; border-top: 1px solid #e7ebf0; }
+#meaning-reason { flex: 1; margin: 0; color: var(--color-text-muted); font-size: 11px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.meaning-sheet-footer .btn { flex-shrink: 0; min-height: 36px; font-size: 12px; border-radius: 7px; }
+.meaning-draft-strip { display: flex; align-items: center; gap: 12px; margin-top: 22px; padding: 8px 13px; border: 1px solid #202b3c; border-radius: 10px; font-size: 13px; }
+#meaning-draft-text { flex: 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.meaning-draft-strip small { color: var(--color-text-muted); font-size: 11px; }
+.meaning-custom { padding: 14px; margin-top: 10px; border: 1px solid #cbd3df; border-radius: 10px; }
+.meaning-custom[hidden] { display: none; }
+.meaning-custom label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.meaning-custom textarea { display: block; width: 100%; resize: vertical; border: 1px solid #cbd3df; border-radius: 7px; padding: 10px; color: var(--color-text); }
+.meaning-custom > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+.meaning-custom small { color: var(--color-text-subtle); font-size: 11px; }
+#meaning-dialog[aria-busy="true"] .meaning-option { opacity: .6; cursor: wait; }
+@media (max-width: 520px) {
+  #meaning-dialog { padding: 18px 14px; }
+  .meaning-sheet-heading { gap: 7px; }
+  .meaning-option { padding: 11px; gap: 9px; }
+  .meaning-option-send { display: none; }
+  .meaning-sheet-footer, .meaning-custom > div { align-items: stretch; flex-direction: column; gap: 10px; }
+  .meaning-sheet-footer .btn { align-self: flex-end; }
+  .meaning-draft-strip { align-items: start; flex-direction: column; gap: 4px; }
+}

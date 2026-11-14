@@ -54,6 +54,7 @@ async function sendMessage() {
       method: "POST",
       body: { text },
     });
+    if (channel !== roomId || !activeWorkspace()) return;
     if (analysis.ambiguous && analysis.expressions?.length) {
       pending = { text, roomId, expressions: analysis.expressions };
       renderMeaning();

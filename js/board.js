@@ -1,6 +1,34 @@
 // main의 카드 생성 → 채팅 확인 → 전원 확인 시 보드 고정 흐름을 워크스페이스에 연결합니다.
 let boardFilter = "전체";
 let agreementViewer = currentUser.id;
+// 보드는 카드별 정보 대신 서버 영수증 ID별로 한 셀만 표시합니다.
+async function loadBoardReceipts(roomId, cards, lang) {
+  const boardCards = cards.filter(card => card.status === "CONFIRMED");
+  if (!boardCards.length) return [];
+  const summaries = await API.request("/rooms/" + API.id(roomId) + "/receipts");
+  if (!Array.isArray(summaries)) throw new Error("api.invalidResponse");
+  const candidates = summaries.filter(summary => (summary.sourceCardIds || []).some(id => boardCards.some(card => String(card.id) === String(id))));
+  const groups = [];
+  const seen = new Set();
+  // 여러 과거 영수증을 조회할 때 한 번에 발생하는 요청 수를 제한합니다.
+  for (let index = 0; index < candidates.length; index += 4) {
+    const receipts = await Promise.all(candidates.slice(index, index + 4).map(summary => API.request("/receipts/" + API.id(summary.id) + "?lang=" + lang)));
+    for (const receipt of receipts) {
+      if (String(receipt?.roomId) !== String(roomId) || seen.has(String(receipt.id))) continue;
+      const items = (receipt.items || []).filter(item => boardCards.some(card => String(card.id) === String(item.sourceCardId) &&
+        (card.version == null || item.sourceCardVersion === card.version)));
+      if (!items.length) continue;
+      seen.add(String(receipt.id));
+      groups.push({
+        id: String(API.id(receipt.id)),
+        cardIds: [...new Set(items.map(item => String(item.sourceCardId)))],
+        disputedCardIds: [...new Set(items.filter(item => item.status === "OBJECTED" || (item.responses || []).some(response => response.type === "OBJECT")).map(item => String(item.sourceCardId)))],
+        disputed: items.some(item => item.status === "OBJECTED" || (item.responses || []).some(response => response.type === "OBJECT")),
+      });
+    }
+  }
+  return groups;
+}
 function agreementCards() {
   return (activeWorkspace()?.cards || []).filter((card) => card.schema === 2);
 }
@@ -42,6 +70,10 @@ function agreementAvatars(card) {
     "</div>"
   );
 }
+function agreementDisputed(card) { return card.receiptStatus === "OBJECTED"; }
+function agreementDisputeBadge(card) {
+  return agreementDisputed(card) ? '<span class="agreement-dispute-tag">' + esc(t("api.receiptDisputed")) + '</span>' : '';
+}
 function renderAgreementMessage(reference) {
   const card = agreementCards().find((c) => c.id === reference.id);
   if (!card) return "";
@@ -51,31 +83,22 @@ function renderAgreementMessage(reference) {
     waiting = members.filter((m) => !card.confirmedIds.includes(m.id));
   const title = ContentAPI.cardText(card, "title"),
     text = ContentAPI.cardText(card, "text");
-  return `<article class="chat-agreement ${agreed ? "is-complete" : ""}" data-card-id="${esc(card.id)}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))}</span>${agreed ? '<span class="agreement-success-tag">' + esc(t("allConfirmed")) + "</span>" : '<span class="agreement-byline">' + "" + "</span>"}</div><h3>${esc(title)}</h3><p class="agreement-body">${esc(text)}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="agreement-confirmation">${agreementAvatars(card)}<span class="agreement-progress"><b>${esc(t("confirmationCount", { count: members.length - waiting.length, total: members.length }))}</b> · ${esc(agreed ? t("pinned") : t("waitingFor", { names: waiting.map((m) => m.name).join(", ") }))}</span>${agreed ? "" : `<button type="button" class="agreement-confirm ${mine ? "is-checked" : ""}" data-confirm-agreement="${esc(card.id)}" ${mine ? "disabled" : ""}>${esc(t(mine ? "confirmedByMe" : "confirm"))}</button>`}</div></article>${agreed ? '<div class="agreement-pin-notice">✓ ' + esc(t("pinNotice", { title })) + "</div>" : ""}`;
+  return `<article class="chat-agreement ${agreed ? "is-complete" : ""} ${agreementDisputed(card) ? "has-dispute" : ""}" data-card-id="${esc(card.id)}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))}</span>${agreementDisputeBadge(card)}${agreed ? '<span class="agreement-success-tag">' + esc(t("allConfirmed")) + "</span>" : '<span class="agreement-byline">' + "" + "</span>"}</div><h3>${esc(title)}</h3><p class="agreement-body">${esc(text)}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="agreement-confirmation">${agreementAvatars(card)}<span class="agreement-progress"><b>${esc(t("confirmationCount", { count: members.length - waiting.length, total: members.length }))}</b> · ${esc(agreed ? t("pinned") : t("waitingFor", { names: waiting.map((m) => m.name).join(", ") }))}</span>${agreed ? "" : `<button type="button" class="agreement-confirm ${mine ? "is-checked" : ""}" data-confirm-agreement="${esc(card.id)}" ${mine ? "disabled" : ""}>${esc(t(mine ? "confirmedByMe" : "confirm"))}</button>`}</div></article>${agreed ? '<div class="agreement-pin-notice">✓ ' + esc(t("pinNotice", { title })) + "</div>" : ""}`;
 }
 function renderAgreementViewer() {
   agreementViewer = currentUser.id;
-  $("#create-card").disabled = !ready || !activeWorkspace();
+  $("#create-card").disabled = !ready || !activeWorkspace() || roomLeaveInFlight;
 }
 function renderBoard() {
   renderAgreementViewer();
-  const confirmed = agreementCards().filter(agreementComplete);
-  const visible = confirmed.filter((c) => boardFilter === "전체" || c.type === boardFilter);
-  $("#board-count").textContent = confirmed.length;
-  $("#board-cards").innerHTML = visible.length
-    ? [...visible]
-        .reverse()
-        .map(
-          (card) =>
-            `<article class="card pinned-agreement ${card.justPinned ? "is-new" : ""}"><div class="agreement-card-heading"><span class="agreement-tag">${esc(t("agreementCard"))}</span>${card.justPinned ? '<span class="agreement-success-tag">' + esc(t("justPinned")) + "</span>" : ""}</div><h3>${esc(ContentAPI.cardText(card, "title"))}</h3><p>${esc(ContentAPI.cardText(card, "text"))}</p><div class="agreement-meta"><span>${esc(t("assignedTo", { names: card.assigneeIds.map(agreementName).join(" · ") }))}</span><span>${esc(t("dueOn", { date: agreementDate(card.date) }))}</span></div><div class="confirmed">✓ ${esc(t("allConfirmed"))}</div><button type="button" class="btn" data-export-card="${esc(card.id)}" ${card.date ? "" : "disabled"}>${esc(t("api.addCalendar"))}</button></article>`,
-        )
-        .join("")
-    : '<p class="empty">' + esc(t(confirmed.length ? "emptyCategory" : "boardWaiting")) + "</p>";
-  document.querySelectorAll(".filter").forEach((button) => {
-    const selected = button.dataset.filter === boardFilter;
-    button.classList.toggle("active", selected);
-    button.setAttribute("aria-pressed", String(selected));
-  });
+  const receipts = activeWorkspace()?.boardReceipts || [];
+  const groupedCardIds = new Set(receipts.flatMap(receipt => receipt.cardIds || []));
+  const ungrouped = agreementCards().filter(card => agreementComplete(card) && !groupedCardIds.has(String(card.id)));
+  $("#board-count").textContent = receipts.length + ungrouped.length;
+  const standaloneCards = ungrouped.map(card => '<article class="board-unsettled-card" data-unsettled-card="' + esc(card.id) + '"><strong>' + esc(ContentAPI.cardText(card, "title")) + '</strong><span>' + esc(t(card.receiptStatus && card.receiptStatus !== "NOT_CREATED" ? 'api.receiptUnlinked' : 'api.receiptNotCreated')) + '</span></article>').join('');
+  $("#board-cards").innerHTML = receipts.length || ungrouped.length
+    ? standaloneCards + receipts.map(receipt => '<button type="button" class="board-receipt ' + (receipt.disputed ? 'has-dispute' : '') + '" data-open-board-receipt="' + esc(receipt.id) + '"><span>' + esc(t('api.receiptNumber', {id:receipt.id})) + '</span>' + (receipt.disputed ? '<span class="agreement-dispute-tag">' + esc(t('api.boardDisputed')) + '</span>' : '') + '</button>').join('')
+    : '<p class="empty">' + esc(t('api.boardReceiptsEmpty')) + '</p>';
 }
 
 function initBoard() {

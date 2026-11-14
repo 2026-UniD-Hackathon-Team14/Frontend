@@ -8,25 +8,21 @@ try {
   appState.activeId = saved?.activeId ? String(saved.activeId) : null;
   appState.receiptIds = saved?.receiptIds || {};
 } catch {}
-// Room-list API is not available yet. Known IDs are discovery hints, never proof of membership.
-function knownRoomIds() {
-  const ids = new Set(appState.roomIds.map(String));
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key?.startsWith("nunchichat.server-index.v1.")) continue;
-      try {
-        const saved = JSON.parse(localStorage.getItem(key));
-        if (!Array.isArray(saved?.roomIds)) continue;
-        for (const id of saved.roomIds) {
-          const value = String(id);
-          if (/^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0)
-            ids.add(value);
-        }
-      } catch {}
-    }
-  } catch {}
-  return [...ids];
+// 방 발견과 멤버십 판단은 서버 목록을 사용하며 다른 계정의 저장 기록을 읽지 않습니다.
+async function loadJoinedRooms() {
+  const summaries = await API.request("/users/me/rooms");
+  if (!Array.isArray(summaries)) throw new Error("api.invalidResponse");
+  const rooms = summaries.map(summary => {
+    const id = String(API.id(summary.id));
+    const previous = appState.workspaces.find(workspace => workspace.id === id);
+    return previous ? { ...previous, name: summary.name } : serverRoom(summary);
+  });
+  appState.workspaces = rooms;
+  appState.roomIds = rooms.map(room => room.id);
+  for (const id of Object.keys(chats)) if (!appState.roomIds.includes(id)) delete chats[id];
+  rooms.forEach(room => { chats[room.id] = room.messages; });
+  saveState();
+  return rooms;
 }
 let channel = appState.activeId;
 const chats = {};
@@ -34,6 +30,7 @@ let pending = null;
 let busy = false;
 let toastTimer;
 let ready = false;
+let roomLeaveInFlight = false;
 function activeWorkspace() {
   return appState.workspaces.find((w) => w.id === appState.activeId);
 }
@@ -142,6 +139,10 @@ async function refreshRoom({ quiet = false } = {}) {
       API.request("/rooms/" + id + "/messages?lang=" + lang),
       API.request("/rooms/" + id + "/cards?lang=" + lang),
     ]);
+    let boardReceipts = [];
+    let receiptLinkError = null;
+    try { boardReceipts = await loadBoardReceipts(id, cards, lang); }
+    catch (error) { receiptLinkError = error; }
     if (id !== channel || lang !== I18n.language || version !== refreshVersion) return;
     const workspace = activeWorkspace();
     if (!workspace) return;
@@ -170,12 +171,17 @@ async function refreshRoom({ quiet = false } = {}) {
       assigneeIds: c.assignee ? [String(c.assignee.id)] : [],
       confirmedIds: (c.confirmations || []).map((x) => String(x.userId)),
     }));
+    workspace.boardReceipts = boardReceipts;
     workspace.messages = mergeTimeline(id, workspace.messages, workspace.cards);
     chats[id] = workspace.messages;
     renderApp();
     setConnection("api.connected");
+    if (receiptLinkError && !quiet) showError(receiptLinkError);
   } catch (error) {
     if (id === channel && lang === I18n.language && version === refreshVersion) {
+      if (error.status === 403 && typeof reconcileRoomMembership === "function") {
+        if (await reconcileRoomMembership()) return;
+      }
       setConnection("api.disconnected");
       if (!quiet) showError(error);
     }

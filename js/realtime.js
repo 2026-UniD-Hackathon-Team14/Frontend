@@ -70,9 +70,13 @@ window.RoomSync = (() => {
           if (frame.startsWith("MESSAGE")) {
             try {
               const message = JSON.parse(body);
+              if (message.type === "MEMBER_LEFT" && String(message.data?.userId) === currentUser.id) {
+                reconcileRoomMembership();
+                continue;
+              }
               if (message.type === "CARD_CREATED" && message.data?.id)
                 rememberTimelineCard(roomId, message.data.id);
-              if (message.type === "MEETING_ENDED" && message.data?.receiptId) {
+              if (["MEETING_ENDED", "RECEIPT_CREATED", "RECEIPT_UPDATED"].includes(message.type) && message.data?.receiptId) {
                 rememberReceipt(roomId, message.data.receiptId);
                 saveState();
               }

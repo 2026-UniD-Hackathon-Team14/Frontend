@@ -60,7 +60,11 @@ const requests = [],
 let failSend = false,
   failCard = false,
   failJoin = false,
+  failSettlement = false,
+  failLeave = false,
+  failAfterLeave = false,
   failGet = false;
+let nextReceiptItemId = 1;
 const clone = (o) => JSON.parse(JSON.stringify(o));
 async function routeAPI(route) {
   const req = route.request(),
@@ -89,14 +93,14 @@ async function routeAPI(route) {
         assert(Number.isInteger(value));
     }
   }
-  const reply = async (data, status = 200) =>
+  const reply = async (data, status = 200, code = "TEST_FAILURE") =>
     route.fulfill({
       status,
       contentType: "application/json",
       body: JSON.stringify({
         success: status < 400,
         data: status < 400 ? data : null,
-        error: status < 400 ? null : { code: "TEST_FAILURE", message: String(data) },
+        error: status < 400 ? null : { code, message: String(data) },
       }),
     });
   let match;
@@ -112,6 +116,8 @@ async function routeAPI(route) {
       users.some((u) => u.id === Number(match[1])) ? 200 : 404,
     );
   if (!users.some((u) => u.id === uid)) return reply("Missing user header", 401);
+  if (p === "/users/me/rooms" && method === "GET")
+    return reply(rooms.filter(room => room.members.some(member => member.id === uid)).map(room => ({id:room.id,name:room.name})));
   if (p === "/rooms" && method === "POST") {
     assert.deepEqual(Object.keys(body), ["name"]);
     const room = { id: rooms.length + 1, name: body.name, members: [] };
@@ -123,6 +129,13 @@ async function routeAPI(route) {
       room = rooms.find((r) => r.id === id),
       suffix = match[2];
     if (!room) return reply("Missing room", 404);
+    if (suffix === "/members/me" && method === "DELETE") {
+      assert.equal(body,null,'탈퇴는 사용자 헤더만 사용하고 본문을 보내지 않음');
+      if (failLeave) { failLeave=false; return reply('Leave failed',503); }
+      room.members=room.members.filter(member=>member.id!==uid);
+      if (failAfterLeave) { failAfterLeave=false; return reply('Leave response lost',503); }
+      return reply({roomId:id,userId:uid});
+    }
     if (suffix === "/members") {
       if (failJoin) {
         failJoin = false;
@@ -208,7 +221,33 @@ async function routeAPI(route) {
         cards.push(c);
         return reply(c, 201);
       }
-      return reply(cards.filter((c) => c.roomId === id));
+      return reply(cards.filter((c) => c.roomId === id).map(card => {
+        const linked = receipts.filter(receipt => receipt.roomId === id).flatMap(receipt => receipt.items).filter(item => item.sourceCardId === card.id);
+        const item = linked.find(item => item.status === "CONFIRMED") || linked.at(-1);
+        return {...card,version:1,receiptStatus:item?.status || "NOT_CREATED",receiptItemId:item?.id || null};
+      }));
+    }
+    if (suffix === "/receipts") {
+      if (method === "GET") return reply(receipts.filter(receipt => receipt.roomId === id).reverse().map(receipt => ({
+        id: receipt.id, roomId: id, createdAt: receipt.createdAt, status: receipt.status,
+        sourceCardIds: receipt.items.map(item => item.sourceCardId), itemCount: receipt.items.length,
+        confirmedItemCount: receipt.items.filter(item => item.status === "CONFIRMED").length,
+      })));
+      assert.equal(body, null, "중간결산 요청에는 메시지나 카드 목록을 보내지 않음");
+      if (failSettlement) { failSettlement = false; return reply("Settlement failed", 503); }
+      const eligible = cards.filter(card => card.roomId === id && card.status === "CONFIRMED" && !receipts.some(receipt =>
+        receipt.roomId === id && receipt.items.some(item => item.sourceCardId === card.id && item.status === "CONFIRMED")));
+      if (!eligible.length) return reply("No eligible cards", 409, "NO_ELIGIBLE_CARDS");
+      const existing = receipts.find(receipt => receipt.roomId === id && receipt.items.length === eligible.length &&
+        eligible.every(card => receipt.items.some(item => item.sourceCardId === card.id)));
+      if (existing) return reply({receiptId:existing.id,roomId:id,created:false,sourceCardIds:eligible.map(card => card.id),status:existing.status});
+      const receipt = {id:receipts.length+1,roomId:id,createdAt:new Date().toISOString(),status:"PENDING",participants:room.members,
+        items:eligible.map(card => receipts.flatMap(receipt => receipt.items).find(item => item.sourceCardId === card.id && item.status !== "CONFIRMED") || {
+          id:nextReceiptItemId++,sourceCardId:card.id,sourceCardVersion:1,title:card.title,what:card.content,
+          assignee:card.assignee,dueDate:card.dueDate,displayDate:card.displayDate,status:"PENDING",responses:[],
+        })};
+      receipts.push(receipt);
+      return reply({receiptId:receipt.id,roomId:id,created:true,sourceCardIds:eligible.map(card => card.id),status:receipt.status},201);
     }
     if (suffix === "/meetings/start")
       return reply({ meetingId: id, startedAt: new Date().toISOString() }, 201);
@@ -275,7 +314,7 @@ async function routeAPI(route) {
           )
         ? "CONFIRMED"
         : "PENDING";
-    receipt.status = item.status === "CONFIRMED" ? "CONFIRMED" : "PENDING";
+    receipts.forEach(receipt => { receipt.status = receipt.items.every(item => item.status === "CONFIRMED") ? "CONFIRMED" : "PENDING"; });
     return reply({ itemId: item.id, status: item.status, responses: item.responses });
   }
   if (p === "/todos") {
@@ -364,9 +403,10 @@ async function routeAPI(route) {
     assert.equal(await a.locator("#settle-agreements + #leave-room").count(), 1);
     await a.click("#leave-room");
     await a.locator("#leave-room-dialog[open]").waitFor();
-    assert.equal(await a.locator("#confirm-room-leave").isDisabled(), true);
+    assert.equal(await a.locator("#confirm-room-leave").isDisabled(), false);
     await a.locator("#leave-room-dialog .close").last().click();
     assert.equal(await a.evaluate(() => activeWorkspace().id), "1");
+    assert.equal(requests.filter(request=>request.method==='DELETE'&&request.p.endsWith('/members/me')).length,0,'취소 시 서버 탈퇴 요청을 보내지 않음');
     await signup(b, "Bob", "de");
     await b.click("#create-workspace");
     await b.fill("#join-room-id", "1");
@@ -481,57 +521,142 @@ async function routeAPI(route) {
 
     await a.click("[data-confirm-agreement]");
     assert.equal(await a.locator(".pinned-agreement").count(), 0);
+    assert.equal(await a.locator('.board-unsettled-card').count(),0,'Card stays out of board until all members confirm');
     await b.evaluate(() => refreshRoom());
     await b.click("[data-confirm-agreement]");
     await a.evaluate(() => refreshRoom());
-    assert.equal(await a.locator(".pinned-agreement").count(), 1);
+    assert.equal(await a.locator(".board-receipt").count(), 0);
+    assert.equal(await a.locator('.board-unsettled-card').count(),1,'Fully confirmed card appears immediately before settlement');
+    assert.equal(await a.locator('.board-unsettled-card strong').textContent(),'Actual card');
+    assert.equal(await a.locator('.board-unsettled-card > span').textContent(),await a.evaluate(()=>t('api.receiptNotCreated')));
+    assert.equal(await a.locator('.board-unsettled-card p, .board-unsettled-card button').count(),0,'Standalone card contains only title and receipt-ID state');
     assert.deepEqual(
       cards[0].confirmations.map((c) => c.userId),
       [1, 2],
     );
-    await a.click("[data-export-card]");
-    await a.locator(".tools-calendar").waitFor();
-    assert.equal(events.length, 1);
-    await a.click("[data-tool-view=chat]");
+    cards.push({ ...clone(cards[0]), id:2, title:'Unconfirmed card', status:'PENDING', confirmations:[] });
+    failSettlement = true;
     await a.click("#settle-agreements");
     await a.locator("#api-error:not([hidden])").waitFor();
-    assert.equal(
-      requests.filter((r) => r.method === "POST" && r.p.includes("/meetings")).length,
-      0,
-    );
-    assert.equal(receipts.length, 0, "Unsupported settlement must not fabricate a receipt");
-    assert.equal(await a.locator("#end-meeting").count(), 0);
-    await a.click("#dismiss-error");
-    // Existing server receipts remain viewable/respondable while new settlement awaits backend support.
-    receipts.push({
-      id: 1,
-      meetingId: 1,
-      status: "PENDING",
-      participants: rooms[0].members,
-      items: [
-        {
-          id: 1,
-          what: "Existing server receipt",
-          assignee: users[0],
-          dueDate: "2026-12-04",
-          displayDate: "Dec 4",
-          status: "PENDING",
-          responses: [],
-        },
-      ],
-    });
-    await a.click("[data-tool-view=receipt]");
-    await a.fill("#receipt-open-form input", "1");
-    await a.click("#receipt-open-form button");
-    await a.locator(".meeting-receipt").waitFor();
-    await a.click("[data-receipt-confirm]");
-    await b.click("[data-tool-view=receipt]");
-    await b.fill("#receipt-open-form input", "1");
-    await b.click("#receipt-open-form button");
-    await b.locator("[data-receipt-confirm]").waitFor();
-    await b.click("[data-receipt-confirm]");
-    await a.evaluate(() => loadWorkspaceTool());
-    assert.equal(receipts[0].status, "CONFIRMED");
+    assert.equal(receipts.length,0,'Failed settlement must not fabricate a receipt');
+    await a.click('#dismiss-error');
+    await a.evaluate(() => { document.querySelector('#settle-agreements').click(); document.querySelector('#settle-agreements').click(); });
+    await a.locator('.meeting-receipt').waitFor();
+    assert.equal(receipts.length,1,'Rapid duplicate click creates only one receipt');
+    assert.deepEqual(receipts[0].items.map(item=>item.sourceCardId),[1],'Only board-confirmed cards are settled');
+    assert.equal(await a.locator('.receipt-item h4').textContent(),'Actual card');
+    assert.equal(requests.filter(r=>r.method==='POST'&&r.p.includes('/meetings')).length,0);
+    assert.equal(await a.locator('#end-meeting').count(),0);
+    await a.click('[data-receipt-confirm]');
+    await a.waitForFunction(()=>serverTools.receipt?.items[0].responses.some(response=>String(response.userId)===currentUser.id));
+    await a.click('[data-tool-view=chat]');
+    assert.equal(await a.locator('.board-receipt').count(),1,'Pending receipt is already represented by one receipt cell');
+    assert.equal(await a.locator('.board-unsettled-card').count(),0,'Receipt grouping replaces its standalone card');
+    await a.click('#settle-agreements');
+    await a.locator('.meeting-receipt').waitFor();
+    assert.equal(receipts.length,1,'Repeated settlement reuses a pending receipt');
+    assert.equal(receipts[0].items[0].responses.length,1,'Reusing a receipt preserves confirmations');
+    await b.click('[data-tool-view=receipt]');
+    await b.locator('[data-receipt-confirm]').waitFor();
+    assert.equal(await b.locator('#receipt-choice').inputValue(),'1','Another account discovers the receipt without cached IDs');
+    await b.click('[data-receipt-confirm]');
+    await b.waitForFunction(()=>serverTools.receipt?.status==='CONFIRMED');
+    await a.evaluate(()=>loadWorkspaceTool());
+    assert.equal(receipts[0].status,'CONFIRMED');
+    await a.click('[data-export-item]');
+    await a.locator('.tools-calendar').waitFor();
+    assert.equal(events.length,1);
+    await a.evaluate(()=>refreshRoom());
+    await a.click('[data-tool-view=chat]');
+    await a.locator('.board-receipt').waitFor();
+    assert.equal(await a.locator('.board-receipt > span').count(),1,'Receipt-only cell has one label when not disputed');
+    assert.equal(await a.locator('.board-receipt').textContent(),await a.evaluate(()=>t('api.receiptNumber',{id:1})));
+    assert.equal(await a.locator('.board [data-export-card]').count(),0);
+    assert(!(await a.locator('#board-cards').textContent()).includes('Actual card'));
+    assert(!(await a.locator('#board-cards').textContent()).includes('Original details'));
+    await a.click('.board-receipt');
+    await a.waitForFunction(()=>workspaceTool==='receipt'&&serverTools.receipt?.id===1);
+    assert.equal(await a.locator('#receipt-choice').inputValue(),'1');
+    await a.reload();
+    await a.waitForFunction(()=>ready&&activeWorkspace()?.boardReceipts?.some(receipt=>receipt.id==='1'));
+    await a.locator('.board-receipt').waitFor();
+    await b.locator('[data-receipt-item="1"] details').evaluate(element=>{element.open=true;});
+    await b.fill('[data-dispute-item="1"] textarea','Please check the deadline');
+    await b.click('[data-dispute-item="1"] button');
+    await b.waitForFunction(()=>serverTools.receipt?.items[0]?.status==='OBJECTED');
+    assert.equal(await b.locator('[data-receipt-item="1"]').evaluate(element=>getComputedStyle(element).borderTopColor),'rgb(217, 105, 95)');
+    await a.evaluate(()=>testSocket.onmessage({data:'MESSAGE\ndestination:/topic/rooms/1\n\n'+JSON.stringify({type:'RECEIPT_UPDATED',data:{roomId:1,receiptId:1}})+'\0'}));
+    await a.locator('.board [data-open-board-receipt="1"].has-dispute').waitFor();
+    assert.equal(await a.locator('.board .has-dispute').count(),1);
+    assert.equal(await a.locator('.board .agreement-dispute-tag').textContent(),await a.evaluate(()=>t('api.boardDisputed')));
+    assert.equal(await a.locator('.board .has-dispute').evaluate(element=>getComputedStyle(element).borderTopColor),'rgb(217, 105, 95)');
+    assert.equal(await a.locator('.board .agreement-dispute-tag').evaluate(element=>getComputedStyle(element).borderTopColor),'rgb(217, 105, 95)');
+    assert.equal(await a.locator('.board-receipt').count(),1,'Dispute keeps the same receipt cell');
+    assert.equal(await a.locator('.board-receipt > span').count(),2,'Disputed cell contains only its ID and the dispute warning');
+    const settlementWritesBeforeObjection=requests.filter(request=>request.method==='POST'&&request.p.endsWith('/receipts')).length;
+    await a.click('#settle-agreements');
+    await a.waitForFunction(()=>!pendingActions.size);
+    assert.equal(requests.filter(request=>request.method==='POST'&&request.p.endsWith('/receipts')).length,settlementWritesBeforeObjection,'Known objected cards must not be resubmitted through the unsafe bodyless endpoint');
+    await a.locator('#api-error:not([hidden])').waitFor();
+    await a.click('#dismiss-error');
+    await b.click('[data-receipt-confirm="1"]');
+    await b.waitForFunction(()=>serverTools.receipt?.items[0]?.status==='CONFIRMED');
+    assert.equal(await b.locator('[data-receipt-item="1"].has-dispute').count(),0);
+    await a.evaluate(()=>refreshRoom());
+    await a.locator('.board-receipt').waitFor();
+    assert.equal(await a.locator('.board .agreement-dispute-tag').count(),0,'Resolved objections remove the warning badge');
+    await a.click('[data-tool-view=chat]');
+    await a.click('#settle-agreements');
+    await a.waitForFunction(()=>!pendingActions.size);
+    assert.equal(receipts.length,1,'No eligible cards must not create an empty receipt');
+    assert.equal(await a.locator('#toast').textContent(),await a.evaluate(()=>t('api.noEligibleCards')));
+    // After the second card reaches the board, only this new card is included.
+    cards[1].status='CONFIRMED';
+    cards[1].confirmations=rooms[0].members.map(member=>({userId:member.id,confirmedAt:new Date().toISOString()}));
+    await a.click('#settle-agreements');
+    await a.waitForFunction(()=>serverTools.receipt?.id===2);
+    assert.deepEqual(receipts[1].items.map(item=>item.sourceCardId),[2],'Already-approved cards stay excluded');
+    assert.equal(await a.locator('#receipt-choice option').count(),3);
+    await b.evaluate(()=>testSocket.onmessage({data:'MESSAGE\ndestination:/topic/rooms/1\n\n'+JSON.stringify({type:'RECEIPT_CREATED',data:{roomId:1,receiptId:2}})+'\0'}));
+    await b.locator('#receipt-choice option[value="2"]').waitFor({state:'attached'});
+    await a.reload();
+    await a.waitForFunction(()=>ready&&activeWorkspace()?.id==='1');
+    await a.evaluate(()=>{appState.receiptIds={};saveState();});
+    await a.click('[data-tool-view=receipt]');
+    await a.waitForFunction(()=>serverTools.receipt?.id===2);
+    assert.equal(await a.locator('#receipt-choice option').count(),3,'Receipt history is fetched from the server after reload');
+    cards.push({...clone(cards[0]),id:3,title:'Third card'});
+    await a.click('[data-tool-view=chat]');
+    await a.click('#settle-agreements');
+    await a.waitForFunction(()=>serverTools.receipt?.id===3);
+    assert.deepEqual(receipts[2].items.map(item=>item.sourceCardId),[2,3]);
+    await a.evaluate(()=>refreshRoom());
+    await a.click('[data-tool-view=chat]');
+    assert.equal(await a.locator('[data-open-board-receipt="3"]').count(),1,'Two cards in the same receipt produce one board cell');
+    assert.equal(await a.locator('.board-receipt').count(),3);
+    assert.equal(await a.locator('#board-count').textContent(),'3','Board count is receipt count, not card count');
+    assert.equal(await a.locator('#board-cards h3, #board-cards .agreement-meta, #board-cards [data-export-card]').count(),0);
+    await a.click('[data-open-board-receipt="3"]');
+    await a.waitForFunction(()=>serverTools.receipt?.id===3);
+    const secondItemId=receipts[2].items.find(item=>item.sourceCardId===2).id;
+    await a.click('[data-receipt-confirm="'+secondItemId+'"]');
+    await b.click('[data-refresh-tools]');
+    await b.locator('#receipt-choice option[value="3"]').waitFor({state:'attached'});
+    await b.selectOption('#receipt-choice','3');
+    await b.locator('[data-receipt-confirm="'+secondItemId+'"]').waitFor();
+    await b.click('[data-receipt-confirm="'+secondItemId+'"]');
+    await b.waitForFunction(itemId=>serverTools.receipt?.items.find(item=>item.id===itemId)?.status==='CONFIRMED',secondItemId);
+    assert.equal(receipts[2].status,'PENDING','One confirmed item does not finalize the whole receipt');
+    await a.click('[data-tool-view=chat]');
+    await a.click('#settle-agreements');
+    await a.waitForFunction(()=>serverTools.receipt?.id===4);
+    assert.deepEqual(receipts[3].items.map(item=>item.sourceCardId),[3],'Exclusion is based on each item, not whole-receipt approval');
+    await a.evaluate(()=>refreshRoom());
+    await a.click('[data-tool-view=chat]');
+    await a.locator('.board').screenshot({path:path.join(require('os').tmpdir(),'nunchi-settled-board.png')});
+    await a.click('.board-receipt[data-open-board-receipt="1"]');
+    await a.waitForFunction(()=>workspaceTool==='receipt'&&serverTools.receipt?.id===1);
+    assert.equal(await a.locator('#receipt-choice').inputValue(),'1','Receipt cell opens its own older receipt rather than the latest receipt');
     await a.click("[data-tool-view=todo]");
     await a.fill("#tool-todo-form input", "Server task");
     await a.click("#tool-todo-form button");
@@ -540,6 +665,7 @@ async function routeAPI(route) {
     await a.waitForFunction(() => serverTools.todos[0]?.done);
     await a.fill("[data-edit-todo] input", "Edited task");
     await a.click("[data-edit-todo] button");
+    await a.waitForFunction(() => serverTools.todos[0]?.title === "Edited task");
     assert.equal(todos[0].title, "Edited task");
     await b.click("[data-tool-view=todo]");
     assert.equal(await b.locator("[data-todo-check]").count(), 0);
@@ -609,9 +735,64 @@ async function routeAPI(route) {
     );
     await a.reload();
     await a.waitForFunction(() => ready && activeWorkspace()?.id === "1");
+    // Bob is signed in on both pages. Create a second joined room to test fallback.
+    await a.click('#create-workspace');
+    await a.fill('#workspace-name','Temporary room');
+    await a.click('#workspace-form [type=submit]');
+    await a.waitForFunction(()=>activeWorkspace()?.name==='Temporary room');
+    const temporaryRoom=rooms.find(room=>room.name==='Temporary room');
+    failLeave=true;
+    await a.click('#leave-room');
+    await a.click('#confirm-room-leave');
+    await a.locator('#leave-room-dialog .api-inline-error').waitFor();
+    await a.waitForFunction(()=>!roomLeaveInFlight);
+    assert.equal(await a.evaluate(()=>activeWorkspace()?.name),'Temporary room','Failed DELETE preserves the selected room');
+    assert(temporaryRoom.members.some(member=>member.id===2));
+    await a.evaluate(()=>{document.querySelector('#confirm-room-leave').click();document.querySelector('#confirm-room-leave').click();});
+    await a.waitForFunction(()=>!roomLeaveInFlight&&activeWorkspace()?.id==='1');
+    assert.equal(temporaryRoom.members.length,0,'Server membership removed; room itself preserved');
+    assert.equal(await a.locator('[data-workspace="'+temporaryRoom.id+'"]').count(),0);
+    const contentCounts=[messages.length,cards.length,receipts.length];
+    failAfterLeave=true;
+    await a.click('#leave-room');
+    await a.click('#confirm-room-leave');
+    await a.locator('#leave-room-dialog .api-inline-error').waitFor();
+    await a.waitForFunction(()=>!roomLeaveInFlight);
+    assert.equal(await a.evaluate(()=>channel),'1','Uncertain response does not invent local success');
+    await a.click('#confirm-room-leave');
+    await a.waitForFunction(()=>!roomLeaveInFlight&&channel===null);
+    assert.equal(await a.locator('[data-workspace]').count(),0,'Last room removal shows empty state');
+    assert.equal(await a.locator('#message-input').isDisabled(),true);
+    assert.equal(await a.locator('#create-card').isDisabled(),true);
+    assert.equal(await a.locator('#settle-agreements').isDisabled(),true);
+    assert.deepEqual(rooms[0].members.map(member=>member.id),[1],'Only the current user leaves');
+    assert.deepEqual([messages.length,cards.length,receipts.length],contentCounts,'Leaving preserves server conversations and agreements');
+    await a.evaluate(()=>localStorage.setItem(STORAGE_KEY,JSON.stringify({roomIds:['1'],activeId:'1'})));
+    await a.reload();
+    await a.waitForFunction(()=>ready);
+    assert.equal(await a.locator('[data-workspace]').count(),0,'Stale local room IDs cannot resurrect membership');
+    const writesBeforeSync=requests.filter(request=>request.method==='DELETE').length;
+    await b.evaluate(()=>testSocket.onmessage({data:'MESSAGE\ndestination:/topic/rooms/1\n\n'+JSON.stringify({type:'MEMBER_LEFT',data:{roomId:1,userId:2}})+'\0'}));
+    await b.waitForFunction(()=>channel===null&&appState.workspaces.length===0);
+    assert.equal(requests.filter(request=>request.method==='DELETE').length,writesBeforeSync,'Other-tab leave reconciliation is read-only');
+    const remaining=await client();
+    await remaining.goto(base+'/login.html');
+    await remaining.fill('#user-id','1');
+    await remaining.click('#login-form button');
+    await remaining.waitForURL('**/test.html');
+    await remaining.waitForFunction(()=>ready&&channel==='1');
+    await remaining.locator('.bubble').first().waitFor();
+    assert.equal(await remaining.locator('#member-avatars .avatar').count(),1);
+    await remaining.click('[data-tool-view=receipt]');
+    await remaining.locator('.meeting-receipt').waitFor();
+    assert.equal(await remaining.locator('#receipt-choice option').count(),receipts.length+1,'Remaining member retains receipt history');
+    rooms[0].members=[]; // simulate leaving on another device without receiving its event
+    await remaining.evaluate(()=>refreshRoom({quiet:true}));
+    await remaining.waitForFunction(()=>channel===null&&appState.workspaces.length===0);
+    assert.equal(await remaining.locator('#tool-content').textContent(),'','403 fallback clears the old room tool content');
     assert.deepEqual(errors, []);
     console.log(
-      "PASS: API contracts, two users, real identity headers, create/join retry, server-only chat/card/receipt/calendar/todo, failed writes preserve drafts, STOMP refresh, language changes, ID sign-in, persistence references, mobile.",
+      "PASS: API contracts, server room list, chat/card/settlement, leave cancel/failure/retry, last-room empty state, cross-tab event and 403 reconciliation, preserved server content, locale and mobile.",
     );
   } finally {
     await browser.close();
