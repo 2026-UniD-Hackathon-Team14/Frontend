@@ -62,3 +62,27 @@
   color: #fff;
   background: var(--coral-600);
 }
+
+.room-actions .room-leave,
+#leave-room-dialog .room-leave {
+  background: var(--coral-600, #b0443d);
+  border: 1px solid var(--coral-600, #b0443d);
+  color: #fff;
+  min-height: 36px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.room-leave:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#leave-room-dialog {
+  width: min(440px, calc(100vw - 32px));
+}
+#leave-room-description {
+  line-height: 1.7;
+  color: var(--color-text-muted);
+}

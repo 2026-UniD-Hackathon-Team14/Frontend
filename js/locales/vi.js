@@ -280,4 +280,14 @@ window.NunchiLocales.vi = {
   "api.status.OBJECTED": "Có phản đối",
   "api.settlementUnavailable":
     "Biên nhận tổng kết dùng các thẻ đã xác nhận trên bảng. Máy chủ chưa hỗ trợ tạo biên nhận từ thẻ và theo dõi xác nhận.",
+  "sheet.before": "Trước khi gửi",
+  "sheet.edit": "Đóng và sửa tin nhắn",
+  "sheet.choose": "Chọn ý định để gửi tin nhắn.",
+  "sheet.sendIntent": "Gửi với ý này",
+  "sheet.sentIntent": "Ý đã gửi: {meaning}",
+  "sheet.receivedIntent": "Ý được {name} xác nhận: {meaning}",
+  "roomLeave.button": "Rời phòng chat",
+  "roomLeave.title": "Rời phòng chat này?",
+  "roomLeave.unavailable":
+    "Máy chủ chưa hỗ trợ rời phòng chat. Tư cách thành viên và hội thoại được giữ nguyên.",
 };

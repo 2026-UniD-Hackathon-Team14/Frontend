@@ -355,12 +355,18 @@ async function routeAPI(route) {
     await a.fill("#workspace-name", "Server team");
     failJoin = true;
     await a.click("#workspace-form [type=submit]");
-    await a.locator(".api-inline-error").waitFor();
+    await a.locator("#workspace-dialog .api-inline-error").waitFor();
     assert.equal(rooms.length, 1);
     await a.click("#workspace-form [type=submit]");
     await a.waitForFunction(() => activeWorkspace()?.id === "1");
     assert.equal(rooms.length, 1);
     assert.equal(rooms[0].members[0].id, 1);
+    assert.equal(await a.locator("#settle-agreements + #leave-room").count(), 1);
+    await a.click("#leave-room");
+    await a.locator("#leave-room-dialog[open]").waitFor();
+    assert.equal(await a.locator("#confirm-room-leave").isDisabled(), true);
+    await a.locator("#leave-room-dialog .close").last().click();
+    assert.equal(await a.evaluate(() => activeWorkspace().id), "1");
     await signup(b, "Bob", "de");
     await b.click("#create-workspace");
     await b.fill("#join-room-id", "1");
@@ -374,6 +380,42 @@ async function routeAPI(route) {
     await a.fill("#message-input", "maybe tomorrow");
     await a.click("#send");
     await a.locator("#meaning-dialog[open]").waitFor();
+    assert.equal(messages.length, 0, "Analysis must not publish a message");
+    assert.equal(await a.locator("#pending-text mark").textContent(), "maybe");
+    assert.equal(await a.locator("#message-input").getAttribute("readonly"), "");
+    await a.click("#dismiss-error");
+    await a.setViewportSize({ width: 390, height: 844 });
+    await a.waitForTimeout(250);
+    const bounds = await a.evaluate(() => {
+      const sheet = document.querySelector("#meaning-dialog").getBoundingClientRect(),
+        composer = document.querySelector("#message-form").getBoundingClientRect();
+      return {
+        left: sheet.left,
+        right: sheet.right,
+        bottom: sheet.bottom,
+        composerTop: composer.top,
+        width: innerWidth,
+        height: sheet.height,
+      };
+    });
+    assert(bounds.left >= 0 && bounds.right <= bounds.width && bounds.height > 100);
+    assert(bounds.bottom <= bounds.composerTop + 1);
+    await a.screenshot({
+      path: path.join(require("os").tmpdir(), "nunchi-meaning-sheet.png"),
+      fullPage: true,
+    });
+    await a.locator("#meaning-dialog").press("Escape");
+    assert.equal(await a.locator("#meaning-dialog").getAttribute("open"), null);
+    assert.equal(await a.locator("#message-input").inputValue(), "maybe tomorrow");
+    assert.equal(messages.length, 0);
+    await a.setViewportSize({ width: 1440, height: 1000 });
+    await a.locator("#message-input").press("Enter");
+    await a.locator("#meaning-dialog[open]").waitFor();
+    failSend = true;
+    await a.click("[data-meaning=UNDECIDED]");
+    await a.locator("#meaning-error:not([hidden])").waitFor();
+    await a.waitForFunction(() => !busy);
+    assert.equal(messages.length, 0, "Failed intent submission must remain unsent");
     await a.click("[data-meaning=UNDECIDED]");
     await a.waitForFunction(() => chats[channel].some((m) => m.originalText === "maybe tomorrow"));
     assert.equal(messages[0].selectedIntent, "UNDECIDED");
@@ -387,6 +429,13 @@ async function routeAPI(route) {
       }),
     );
     await b.locator(".bubble").filter({ hasText: "Server translation: maybe tomorrow" }).waitFor();
+    assert((await b.locator(".meaning-confirmation").textContent()).includes("Alice"));
+    assert.equal(await b.locator(".intent-confirmed .bubble").count(), 1);
+    await b.click("[data-original]");
+    assert.equal(await b.locator("[data-original]").getAttribute("aria-expanded"), "true");
+    assert((await b.locator(".original:not([hidden])").textContent()).includes("maybe tomorrow"));
+    await b.click("[data-original]");
+
     failSend = true;
     await a.fill("#message-input", "Keep failed draft");
     await a.click("#send");

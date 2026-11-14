@@ -287,4 +287,14 @@ window.NunchiLocales.ko = {
   "api.status.OBJECTED": "이의 있음",
   "api.settlementUnavailable":
     "중간결산은 합의 보드의 카드로 생성합니다. 현재 서버에 카드 기반 영수증 생성·확인 상태 조회 API가 없어 아직 생성할 수 없습니다.",
+  "sheet.before": "전송 전 확인",
+  "sheet.edit": "닫고 메시지 수정",
+  "sheet.choose": "뜻을 선택하면 메시지가 전송돼요.",
+  "sheet.sendIntent": "이 뜻으로 보내기",
+  "sheet.sentIntent": "전달된 뜻: {meaning}",
+  "sheet.receivedIntent": "{name}님이 확인한 뜻: {meaning}",
+  "roomLeave.button": "채팅방 나가기",
+  "roomLeave.title": "채팅방에서 나가시겠습니까?",
+  "roomLeave.unavailable":
+    "현재 서버에서 채팅방 나가기를 지원하지 않아 아직 나갈 수 없습니다. 팀원 상태와 대화는 그대로 유지됩니다.",
 };

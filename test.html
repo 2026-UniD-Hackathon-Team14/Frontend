@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#1F3A5F" />
     <link rel="stylesheet" href="./css/i18n.css" />
     <link rel="stylesheet" href="./css/api.css" />
+    <link rel="stylesheet" href="./css/meaning-sheet.css" />
   </head>
   <body data-page="main">
     <div id="api-error" class="api-error" role="alert" hidden>
@@ -121,6 +122,14 @@
                 <button type="button" class="btn primary" id="settle-agreements">
                   <span data-i18n="tools.settle">중간 결산</span>
                 </button>
+                <button
+                  type="button"
+                  class="btn room-leave"
+                  id="leave-room"
+                  aria-haspopup="dialog"
+                  aria-controls="leave-room-dialog"
+                  data-i18n="roomLeave.button"
+                ></button>
               </div>
             </div>
             <div
@@ -130,6 +139,29 @@
               aria-label="팀 채팅"
               data-i18n-aria-label="chatLabel"
             ></div>
+            <dialog id="meaning-dialog" class="meaning-sheet" aria-labelledby="meaning-title">
+              <div class="sheet-grip" aria-hidden="true"></div>
+              <header class="meaning-sheet-header">
+                <span class="sheet-eyebrow" data-i18n="sheet.before"></span
+                ><button type="button" id="close-meaning" data-i18n-aria-label="sheet.edit">
+                  ✕
+                </button>
+              </header>
+              <h2 id="meaning-title" data-i18n="meaningTitle"></h2>
+              <p class="sheet-description" data-i18n="api.meaningHelp"></p>
+              <div id="pending-text" class="sheet-quote"></div>
+              <div id="meaning-options"></div>
+              <p id="meaning-error" class="api-inline-error" role="alert" hidden></p>
+              <footer class="meaning-sheet-footer">
+                <span data-i18n="sheet.choose"></span
+                ><button
+                  type="button"
+                  class="btn"
+                  id="send-original"
+                  data-i18n="sendOriginal"
+                ></button>
+              </footer>
+            </dialog>
             <form class="composer" id="message-form">
               <div class="compose-box">
                 <textarea
@@ -178,16 +210,6 @@
         </section>
       </main>
     </div>
-    <dialog id="meaning-dialog">
-      <div class="modal-title">
-        <h2 data-i18n="meaningTitle"></h2>
-        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
-      </div>
-      <p data-i18n="api.meaningHelp"></p>
-      <div class="warning" id="pending-text"></div>
-      <div id="meaning-options"></div>
-      <button type="button" class="btn" id="send-original" data-i18n="sendOriginal"></button>
-    </dialog>
 
     <dialog id="workspace-dialog" aria-labelledby="workspace-dialog-title">
       <div class="modal-title">
@@ -282,6 +304,28 @@
         </div>
       </form>
     </dialog>
+    <dialog
+      id="leave-room-dialog"
+      aria-labelledby="leave-room-title"
+      aria-describedby="leave-room-description"
+    >
+      <div class="modal-title">
+        <h2 id="leave-room-title" data-i18n="roomLeave.title"></h2>
+        <button type="button" class="close" data-i18n-aria-label="close">✕</button>
+      </div>
+      <p id="leave-room-name"></p>
+      <p id="leave-room-description" data-i18n="roomLeave.unavailable"></p>
+      <div class="actions modal-actions">
+        <button type="button" class="btn close" autofocus data-i18n="cancel"></button
+        ><button
+          type="button"
+          class="btn room-leave"
+          id="confirm-room-leave"
+          disabled
+          data-i18n="roomLeave.button"
+        ></button>
+      </div>
+    </dialog>
     <div class="toast" id="toast" role="status" hidden></div>
     <!-- 공통 도구와 상태 → 기능 → 앱 초기화 순으로 실행합니다. -->
     <script src="./js/locales/ko.js"></script>
@@ -302,6 +346,7 @@
     <script src="./js/invitations.js"></script>
     <script src="./js/realtime.js"></script>
     <script src="./js/tools.js"></script>
+    <script src="./js/workspace-leave.js"></script>
     <script src="./script.js"></script>
   </body>
 </html>
