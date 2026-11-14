@@ -199,14 +199,10 @@ function renderBoard() {
         esc(card.id) +
         '"><strong>' +
         esc(ContentAPI.cardText(card, "title")) +
-        "</strong><span>" +
-        esc(
-          t(
-            card.receiptStatus && card.receiptStatus !== "NOT_CREATED"
-              ? "api.receiptUnlinked"
-              : "api.receiptNotCreated",
-          ),
-        ) +
+        "</strong>" +
+        (ContentAPI.cardText(card, "text") ? '<p class="board-card-content">' + esc(ContentAPI.cardText(card, "text")) + '</p>' : '') +
+        '<span class="board-card-due">' +
+        esc(card.date ? t("dueOn", { date: agreementDate(card.date) }) : t("noDueDate")) +
         "</span></article>",
     )
     .join("");

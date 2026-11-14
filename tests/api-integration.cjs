@@ -579,8 +579,9 @@ async function routeAPI(route) {
     assert.equal(await a.locator(".board-receipt").count(), 0);
     assert.equal(await a.locator('.board-unsettled-card').count(),1,'Fully confirmed card appears immediately before settlement');
     assert.equal(await a.locator('.board-unsettled-card strong').textContent(),'Actual card');
-    assert.equal(await a.locator('.board-unsettled-card > span').textContent(),await a.evaluate(()=>t('api.receiptNotCreated')));
-    assert.equal(await a.locator('.board-unsettled-card p, .board-unsettled-card button').count(),0,'Standalone card contains only title and receipt-ID state');
+    assert.equal(await a.locator('.board-card-content').textContent(),'Original details');
+    assert.equal(await a.locator('.board-card-due').textContent(),await a.evaluate(()=>t('dueOn',{date:agreementDate(agreementCards()[0].date)})));
+    assert.equal(await a.locator('.board-unsettled-card button').count(),0);
     assert.deepEqual(
       cards[0].confirmations.map((c) => c.userId),
       [1, 2],
@@ -688,6 +689,19 @@ async function routeAPI(route) {
     await a.waitForFunction(()=>!pending&&!busy);
     assert.equal(messages.at(-1).sendOriginal,true);
     assert.equal(messages.at(-1).intentSelections.length,0);
+    for (let index=0; index<30; index++) messages.push({id:messages.length+1,roomId:1,senderId:2,senderName:"Bob",originalText:"Scroll test "+index,originalLanguage:"de",createdAt:new Date().toISOString()});
+    await a.evaluate(()=>refreshRoom());
+    await a.locator('#messages').evaluate(el=>{el.scrollTop=120; el.dispatchEvent(new Event('scroll'));});
+    const readingTop = await a.locator('#messages').evaluate(el=>el.scrollTop);
+    await a.evaluate(()=>refreshRoom({quiet:true}));
+    assert.equal(await a.locator('#messages').evaluate(el=>el.scrollTop),readingTop,'Polling must preserve the reading position');
+    messages.push({id:messages.length+1,roomId:1,senderId:2,senderName:"Bob",originalText:"New while reading",originalLanguage:"de",createdAt:new Date().toISOString()});
+    await a.evaluate(()=>refreshRoom({quiet:true}));
+    assert.equal(await a.locator('#messages').evaluate(el=>el.scrollTop),readingTop,'Incoming messages must not pull the reader down');
+    await a.locator('#messages').evaluate(el=>{el.scrollTop=el.scrollHeight;el.dispatchEvent(new Event('scroll'));});
+    messages.push({id:messages.length+1,roomId:1,senderId:2,senderName:"Bob",originalText:"Follow at bottom",originalLanguage:"de",createdAt:new Date().toISOString()});
+    await a.evaluate(()=>refreshRoom({quiet:true}));
+    assert(await a.locator('#messages').evaluate(el=>el.scrollHeight-el.clientHeight-el.scrollTop<2),'Readers already at bottom should follow new messages');
     await a.click("[data-tool-view=todo]");
     await a.fill("#tool-todo-form input", "Server task");
     await a.click("#tool-todo-form button");

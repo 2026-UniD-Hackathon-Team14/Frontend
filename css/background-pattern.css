@@ -1,0 +1,11 @@
+﻿/* Apply the doodle pattern only to the main workspace's beige surfaces. */
+body[data-page="main"] .side,
+body[data-page="main"] .board,
+body[data-page="login"] .brand-panel {
+  background-image:
+    linear-gradient(rgba(247, 244, 240, 0.78), rgba(247, 244, 240, 0.78)),
+    url("../assets/patterns/beige-doodles.png");
+  background-size: auto, 470px auto;
+  background-position: top left;
+  background-repeat: repeat;
+}

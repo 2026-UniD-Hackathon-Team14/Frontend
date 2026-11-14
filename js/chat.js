@@ -26,9 +26,19 @@ function renderMessageMeanings(message, mine, sender) {
     })
     .join("");
 }
+const chatScrollPositions = new Map();
+function rememberChatScroll(el) {
+  if (!el.dataset.scrollRoom || !el.getClientRects().length) return;
+  chatScrollPositions.set(el.dataset.scrollRoom, {
+    top: el.scrollTop,
+    follow: el.scrollHeight - el.clientHeight - el.scrollTop <= 48,
+  });
+}
 function renderMessages() {
   const el = $("#messages");
+  rememberChatScroll(el);
   if (!activeWorkspace()) {
+    delete el.dataset.scrollRoom;
     el.innerHTML =
       '<div class="empty">' + esc(t("noWorkspaceMessage")) + "</div>";
     return;
@@ -41,7 +51,9 @@ function renderMessages() {
         draftForm.elements.comment.selectionEnd,
       ]
     : null;
-  const scrollTop = el.scrollTop;
+  const position = chatScrollPositions.get(channel) || { top: 0, follow: true };
+  const scrollTop = position.top;
+  el.dataset.scrollRoom = channel;
   el.innerHTML =
     '<div class="date-divider">' +
     esc(activeWorkspace().name) +
@@ -73,7 +85,7 @@ function renderMessages() {
     input?.focus({ preventScroll: true });
     if (input && selection) input.setSelectionRange(...selection);
     el.scrollTop = scrollTop;
-  } else el.scrollTop = el.scrollHeight;
+  } else el.scrollTop = position.follow ? el.scrollHeight : scrollTop;
 }
 
 async function pushMessage(
@@ -145,6 +157,7 @@ async function sendMessage() {
   }
 }
 function initChat() {
+  $("#messages").addEventListener("scroll", event => rememberChatScroll(event.currentTarget), { passive: true });
   document.addEventListener("click", (event) => {
     const b = event.target.closest("[data-original]");
     if (b) {
