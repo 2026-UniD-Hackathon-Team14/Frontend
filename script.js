@@ -8,6 +8,7 @@ else {
   initChat();
   initInvitations();
   initWorkspaceTools();
+  initRoomLeave();
   $("#logout").onclick = () => {
     RoomSync.stop();
     UserAPI.logout();

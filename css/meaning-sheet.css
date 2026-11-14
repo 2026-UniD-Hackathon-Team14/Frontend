@@ -1,0 +1,208 @@
+.content {
+  position: relative;
+}
+#meaning-dialog.meaning-sheet {
+  position: absolute;
+  inset: auto 24px calc(var(--composer-height, 170px) + 8px);
+  margin: 0;
+  width: auto;
+  max-width: none;
+  max-height: min(540px, calc(100% - var(--composer-height, 170px) - 70px));
+  overflow-y: auto;
+  padding: 18px 22px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--color-text);
+  box-shadow: 0 -12px 48px #1f3a5f24;
+  z-index: 5;
+}
+#meaning-dialog[open] {
+  animation: sheet-in 0.18s ease-out;
+}
+.sheet-grip {
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--color-border-strong);
+  margin: 0 auto 14px;
+}
+.meaning-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sheet-eyebrow {
+  background: #fcf0d4;
+  color: #8b5b0a;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+#close-meaning {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+}
+#meaning-title {
+  margin: 12px 0 6px;
+  font-size: 18px;
+}
+.sheet-description {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.sheet-quote {
+  margin: 16px 0;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--sand-50, #faf8f6);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sheet-quote mark {
+  background: #fcf0d4;
+  border-bottom: 2px solid #d6a241;
+  color: inherit;
+}
+#meaning-options section > p {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+#meaning-options .option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  text-align: left;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--color-primary);
+}
+#meaning-options .option:hover,
+#meaning-options .option:focus-visible {
+  background: var(--sand-100, #f7f4f0);
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+.meaning-number {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 12px;
+}
+.meaning-option-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.meaning-option-action {
+  font-size: 11px;
+}
+.meaning-sheet-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.content:has(#meaning-dialog[open]) .compose-box {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+.message.intent-confirmed .bubble {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+.message .meaning-confirmation {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 18px;
+  background: var(--sand-100, #f7f4f0);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.message .original {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+}
+.message .original strong {
+  display: block;
+  margin-bottom: 4px;
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 600px) {
+  #meaning-dialog.meaning-sheet {
+    inset-inline: 8px;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+  #meaning-title {
+    font-size: 16px;
+  }
+  .meaning-option-action {
+    display: none;
+  }
+  .meaning-sheet-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #meaning-dialog[open] {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .meaning-sheet .sheet-description {
+    display: none;
+  }
+  .meaning-sheet .sheet-quote {
+    margin: 10px 0;
+    padding: 10px;
+  }
+  .meaning-sheet .sheet-grip {
+    margin-bottom: 8px;
+  }
+  #meaning-options .option {
+    padding: 11px;
+  }
+}

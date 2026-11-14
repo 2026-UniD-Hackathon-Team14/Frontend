@@ -287,4 +287,14 @@ window.NunchiLocales.de = {
   "api.status.OBJECTED": "Einwand vorhanden",
   "api.settlementUnavailable":
     "Zwischenabrechnungen verwenden bestätigte Karten. Der Server unterstützt noch keine kartengestützten Belege mit Bestätigungsstatus.",
+  "sheet.before": "Vor dem Senden",
+  "sheet.edit": "Schließen und Nachricht bearbeiten",
+  "sheet.choose": "Wähle eine Bedeutung, um zu senden.",
+  "sheet.sendIntent": "Mit dieser Bedeutung senden",
+  "sheet.sentIntent": "Gesendete Bedeutung: {meaning}",
+  "sheet.receivedIntent": "Von {name} bestätigte Bedeutung: {meaning}",
+  "roomLeave.button": "Chat verlassen",
+  "roomLeave.title": "Diesen Chat verlassen?",
+  "roomLeave.unavailable":
+    "Der Server unterstützt das Verlassen eines Chats noch nicht. Mitgliedschaft und Nachrichten bleiben unverändert.",
 };

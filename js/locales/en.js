@@ -286,4 +286,14 @@ window.NunchiLocales.en = {
   "api.status.OBJECTED": "Objected",
   "api.settlementUnavailable":
     "Interim receipts use confirmed board cards. The server does not yet support card-based receipt creation and approval tracking.",
+  "sheet.before": "Before sending",
+  "sheet.edit": "Close and edit message",
+  "sheet.choose": "Choose a meaning to send your message.",
+  "sheet.sendIntent": "Send with this meaning",
+  "sheet.sentIntent": "Meaning sent: {meaning}",
+  "sheet.receivedIntent": "Meaning confirmed by {name}: {meaning}",
+  "roomLeave.button": "Leave chat",
+  "roomLeave.title": "Leave this chat?",
+  "roomLeave.unavailable":
+    "Leaving a chat is not yet supported by the server. Your membership and conversations remain unchanged.",
 };

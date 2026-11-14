@@ -13,8 +13,9 @@ function renderWorkspaces() {
   const hasWorkspace = Boolean(workspace) && ready;
 
   $("#invite-friends").disabled = !hasWorkspace;
+  $("#leave-room").disabled = !hasWorkspace;
   $("#message-input").disabled = !hasWorkspace;
-  $("#send").disabled = !hasWorkspace || busy;
+  $("#send").disabled = !hasWorkspace || busy || Boolean(pending);
   $("#message-input").placeholder = hasWorkspace ? t("messagePlaceholder") : t("createFirst");
   $("#room-title").textContent = hasWorkspace ? "# " + workspace.name : t("noWorkspace");
   $("#breadcrumb").textContent = workspace
