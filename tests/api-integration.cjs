@@ -631,6 +631,16 @@ async function routeAPI(route) {
     await a.locator('[data-event-preview]').first().hover();
     await a.locator('#calendar-preview').filter({hasText:'Original details'}).waitFor();
     assert((await a.locator('#calendar-preview').textContent()).includes('Alice'));
+    assert.equal(await a.locator('#calendar-preview > strong').textContent(),'Server event','Hover keeps the localized calendar title, not the raw receipt title');
+    const titleChecks = await a.evaluate(() => {
+      const receipt={items:[{sourceCardId:1,sourceCardVersion:2,title:'Original snapshot',what:'Translated body'}]};
+      return [receiptWithTranslatedTitles(receipt,[{id:1,version:2,title:'Localized title'}]).items[0],
+        receiptWithTranslatedTitles(receipt,[{id:1,version:3,title:'Newer title'}]).items[0]];
+    });
+    assert.equal(titleChecks[0].displayTitle,'Localized title');
+    assert.equal(titleChecks[0].what,'Translated body');
+    assert.equal(titleChecks[1].displayTitle,'Original snapshot','Never overwrite a receipt snapshot using a newer card');
+
     await a.evaluate(()=>loadWorkspaceTool({quiet:true}));
     await a.waitForTimeout(350);
     assert.equal(await a.locator('#calendar-preview').isVisible(),true,'Polling keeps the open calendar preview after pointer transitions');

@@ -70,6 +70,25 @@ async function showWorkspaceTool(view, { receiptId = null } = {}) {
   renderWorkspaceTool();
   await loadWorkspaceTool();
 }
+// Receipt title translation is currently missing on the server. Only use a
+// translated card title when it represents the exact version in the receipt.
+function receiptWithTranslatedTitles(receipt, cards) {
+  return { ...receipt, items: (receipt.items || []).map(item => {
+    const card = cards.find(card => String(card.id) === String(item.sourceCardId) &&
+      card.version != null && item.sourceCardVersion != null && Number(card.version) === Number(item.sourceCardVersion));
+    return { ...item, displayTitle: card?.title || item.title };
+  }) };
+}
+async function translateReceiptTitles(receipt, roomId, lang) {
+  if (!receipt?.items?.some(item => item.sourceCardId != null && item.sourceCardVersion != null)) return receipt;
+  try {
+    const cards = await API.request("/rooms/" + API.id(roomId) + "/cards?lang=" + lang);
+    return receiptWithTranslatedTitles(receipt, cards);
+  } catch {
+    // Keep the stored receipt readable if the supplementary card read fails.
+    return receipt;
+  }
+}
 async function loadWorkspaceTool({ quiet = false } = {}) {
   const readKey =
     workspaceTool +
@@ -121,6 +140,7 @@ async function loadWorkspaceTool({ quiet = false } = {}) {
         : null;
       if (data?.roomId != null && String(data.roomId) !== roomId)
         throw new Error("api.receiptRoomMismatch");
+      if (data) data = await translateReceiptTitles(data, roomId, lang);
     }
     if (
       version !== toolVersion ||
@@ -241,9 +261,9 @@ function renderReceiptTool() {
           '" data-receipt-item="' +
           esc(item.id) +
           '"><h4>' +
-          esc(item.title || item.what) +
+          esc(item.displayTitle || item.title || item.what) +
           "</h4>" +
-          (item.title
+          (item.displayTitle || item.title
             ? '<p class="receipt-item-content">' + esc(item.what || "") + "</p>"
             : "") +
           (item.sourceCardId != null
