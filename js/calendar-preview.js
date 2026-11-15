@@ -65,7 +65,7 @@ function initCalendarPreview() {
       }
       const card = await entry.promise;
       if (!active || token !== generation || channel !== roomId || I18n.language !== lang) return;
-      popup.innerHTML = '<strong>' + esc(card?.title || event.title) + '</strong><p class="calendar-preview-content">' +
+      popup.innerHTML = '<strong>' + esc(event.title || card?.title) + '</strong><p class="calendar-preview-content">' +
         esc(card ? card.content || "" : t("api.receiptUnavailable")) + '</p>' +
         (card ? '<div>' + esc(t("assignedTo", { names: card.assignee?.name || t("unassigned") })) + '</div>' : '') +
         '<div>' + esc(t("dueOn", { date: toolDate(card?.dueDate || event.date) })) + '</div>';
